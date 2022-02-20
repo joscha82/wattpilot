@@ -97,7 +97,12 @@ class Wattpilot(object):
     def serial(self):
         """Returns the serial number of Wattpilot Device (read only)"""
         return self._serial
-                
+    @serial.setter
+    def serial(self,value):
+        self._serial = value
+        if (self._password is not None) & (self._serial is not None):
+            self._hashedpassword = base64.b64encode(hashlib.pbkdf2_hmac('sha512',self._password.encode(),self._serial.encode(),100000,256))[:32]
+           
     @property
     def name(self):
         """Returns the name of Wattpilot Device (read only)"""
@@ -137,6 +142,9 @@ class Wattpilot(object):
     @password.setter
     def password(self,value):
         self._password = value
+        if (self._password is not None) & (self._serial is not None):
+            self._hashedpassword = base64.b64encode(hashlib.pbkdf2_hmac('sha512',self._password.encode(),self._serial.encode(),100000,256))[:32]
+
 
     @property
     def url(self):
@@ -262,7 +270,7 @@ class Wattpilot(object):
         self._wst = threading.Thread(target=self._wsapp.run_forever)
         self._wst.daemon = True
         self._wst.start()
-
+        
         _LOGGER.info("Wattpilot connected")
 
     def set_power(self,power):
@@ -279,7 +287,13 @@ class Wattpilot(object):
         message["requestId"]=self.__requestid
         message["key"]=name
         message["value"]=value
-        self.__send(message,True)
+        if (self._secured is not None):
+            if  (self._secured > 0):
+                self.__send(message,True)
+            else:
+                self.__send(message)
+        else:
+            self.__send(message)
 
     def __update_property(self,name,value):
 
@@ -347,23 +361,25 @@ class Wattpilot(object):
                 self._updateAvailable = True
 
     def __on_hello(self,message):
-        _LOGGER.info("Connected to WattPilot %s / Serial %s",message.hostname,message.serial)
-        self._name=message.hostname
-        self._serial = message.serial
-        self._hostname=message.hostname
-        self._version=message.version
+        _LOGGER.info("Connected to WattPilot Serial %s",message.serial)
+        if hasattr(message,"hostname"):
+            self._name=message.hostname
+        self.serial = message.serial
+        if hasattr(message,"hostname"):
+            self._hostname=message.hostname
+        if hasattr(message,"version"):
+            self._version=message.version
         self._manufacturer=message.manufacturer
         self._devicetype=message.devicetype
         self._protocol=message.protocol
-        self._secured=message.secured
+        if hasattr(message,"secured"):
+            self._secured=message.secured
 
     def __on_auth(self,wsapp,message):
-
-        dk = base64.b64encode(hashlib.pbkdf2_hmac('sha512',self._password.encode(),self._serial.encode(),100000,256))[:32]
         ran = random.randrange(10**80)
         self._token3 = "%064x" % ran
         self._token3 = self._token3[:32]
-        hash1 = hashlib.sha256((message.token1.encode()+dk)).hexdigest()
+        hash1 = hashlib.sha256((message.token1.encode()+self._hashedpassword)).hexdigest()
         hash = hashlib.sha256((self._token3 + message.token2+hash1).encode()).hexdigest()
         response = {}
         response["type"] = "auth"
@@ -379,7 +395,7 @@ class Wattpilot(object):
         if secure:
             messageid=message["requestId"]
             payload=json.dumps(message)
-            h = hmac.new(bytearray(self._password.encode()), bytearray(payload.encode()), hashlib.sha256 )
+            h = hmac.new(bytearray(self._hashedpassword), bytearray(payload.encode()), hashlib.sha256 )
             message={}
             message["type"]="securedMsg"
             message["data"]=payload
@@ -456,12 +472,10 @@ class Wattpilot(object):
             self.__on_updateInverter(msg)
 
 
-    def __init__(self, ip ,password):
-
+    def __init__(self, ip ,password,serial=None,cloud=False):
         RECONNECTINTERVALL = 30
 
         self.__requestid=0
-        self._serial = None
         self._name = None
         self._hostname = None
         self._friendlyName = None
@@ -469,8 +483,16 @@ class Wattpilot(object):
         self._devicetype = None
         self._protocol = None
         self._secured = None
-        self._password = password
-        self._url = "ws://"+ip+"/ws"
+        self._serial = None
+        self._password = None
+
+        self.password = password
+
+        if(cloud):
+            self._url= "wss://app.wattpilot.io/app/" + serial + "?version=1.2.9"
+        else:
+            self._url = "ws://"+ip+"/ws"
+        self.serial = None
         self._connected = False
         self._voltage1=None
         self._voltage2=None
