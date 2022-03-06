@@ -3,13 +3,38 @@ import json
 import logging
 import readline
 import wattpilot
+import yaml
 
 from time import sleep
 from types import SimpleNamespace
 
 _LOGGER = logging.getLogger(__name__)
 
-def process_command(wp, cmdline):
+def printPropInfo(wpi, propName, value):
+    propInfo = wpi['properties'][propName]
+    propTitle = ""
+    propDesc = ""
+    propAlias = ""
+    if 'alias' in propInfo:
+        propAlias = f", alias:{propInfo['alias']}"
+    if 'title' in propInfo:
+        propTitle = propInfo['title']
+    if 'description' in propInfo:
+        propDesc = propInfo['description']
+    print(f"- {propName} ({propInfo['type']}{propAlias}): {propTitle}")
+    print(f"  Value: {value}")
+    if propDesc:
+        print(f"  Description: {propDesc}")
+    if 'itemType' in propInfo:
+        print(f"  Array item type: {propInfo['itemType']}")
+    if 'min' in propInfo:
+        print(f"  Minimum value: {propInfo['min']}")
+    if 'max' in propInfo:
+        print(f"  Maximum value: {propInfo['max']}")
+    if 'example' in propInfo:
+        print(f"  Example: {propInfo['example']}")
+
+def process_command(wp, wpi, cmdline):
     """Process a Wattpilot shell command"""
     exit = False
     cmd_args = cmd_parser.parse_args(args=cmdline.strip().split(' '))
@@ -19,8 +44,8 @@ def process_command(wp, cmdline):
         # Don't do anything
         exit = False
     elif (cmd == 'dump'):
-        for key, value in sorted(wp.allProps.items(), key=lambda x: x[0]): 
-            print("{}: {}".format(key, value))
+        for propName, value in sorted(wp.allProps.items(), key=lambda x: x[0]): 
+            print("{}: {}".format(propName, value))
     elif cmd == "exit":
         exit = True
     elif (cmd == 'get'):
@@ -41,8 +66,9 @@ def process_command(wp, cmdline):
     elif (cmd == 'info'):
         print(wp)
     elif (cmd == 'list'):
-        for key in sorted(wp.allProps.keys()): 
-            print(f"{key} ", end="")
+        print(f"List of available properties:")
+        for propName, value in sorted(wp.allProps.items()):
+            printPropInfo(wpi,propName,value)
         print()
     elif (cmd == 'set'):
         if len(args) != 2:
@@ -102,6 +128,13 @@ cmd_parser = argparse.ArgumentParser()
 cmd_parser.add_argument("cmd", help = "Command")
 cmd_parser.add_argument("args", help = "Arguments", nargs='*')
 
+# Read Wattpilot config:
+with open("wattpilot.yaml", 'r') as stream:
+    try:
+        wpi=yaml.safe_load(stream)
+    except yaml.YAMLError as exc:
+        print(exc)
+
 # Connect to Wattpilot:
 wp = wattpilot.Wattpilot(args.ip,args.password)
 wp.connect()
@@ -113,10 +146,10 @@ wait_timeout(lambda: wp.allPropsInitialized, initialized_timeout) or exit("ERROR
 # Process commands:
 if args.cmdline:
     # Process commands passed on the commandline
-    process_command(wp,args.cmdline)
+    process_command(wp,wpi,args.cmdline)
 else:
     # Start interactive shell
-    process_command(wp,"info")
+    process_command(wp,wpi,"info")
     exit=False
     while not exit:
         try:
@@ -124,4 +157,4 @@ else:
         except EOFError as e:
             command = "exit"
             print()
-        exit = process_command(wp,command)
+        exit = process_command(wp,wpi,command)
