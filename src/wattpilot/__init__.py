@@ -61,6 +61,16 @@ class Wattpilot(object):
 
 
     @property
+    def allProps(self):
+        """Returns a dictionary with all properties"""
+        return self._allProps
+
+    @property
+    def allPropsInitialized(self):
+        """Returns true, if all properties have been initialized"""
+        return self._allPropsInitialized
+
+    @property
     def cableType(self):
         """Returns the Cable Type (Ampere) of the connected cable"""
         return self._cableType
@@ -259,6 +269,7 @@ class Wattpilot(object):
             ret = ret + "Car Connected: " + str(self.carConnected) + "\n"
             ret = ret + "Charge Status " + str(self.AllowCharging) + "\n"
             ret = ret + "Mode: " + str(self.mode) + "\n"
+            ret = ret + "Power: " + str(self.amp) + "\n"
             ret = ret +  "Charge: " + "%.2f" % self.power + "kW" + " ---- " + str(self.voltage1) + "V/" + str(self.voltage2) + "V/" + str(self.voltage3) + "V" + " -- "
             ret = ret + "%.2f" % self.amps1 + "A/" + "%.2f" % self.amps2 + "A/" + "%.2f" % self.amps3 + "A" + " -- "
             ret = ret + "%.2f" % self.power1 + "kW/" + "%.2f" % self.power2 + "kW/" + "%.2f" % self.power3 + "kW" + "\n"
@@ -297,6 +308,7 @@ class Wattpilot(object):
 
     def __update_property(self,name,value):
 
+        self._allProps[name] = value
         if name=="acs":
             self._AccessState = Wattpilot.acsValues[value]
 
@@ -420,6 +432,7 @@ class Wattpilot(object):
             _LOGGER.error("Authentification failed: %s" , message.message)
 
     def __on_DeltaStatus(self,message):
+        self._allPropsInitialized=True # Assume all properties have been initialized when first delta status is received
         props = message.status.__dict__
         for key in props:
             self.__update_property(key,props[key])
@@ -494,6 +507,8 @@ class Wattpilot(object):
             self._url = "ws://"+ip+"/ws"
         self.serial = None
         self._connected = False
+        self._allProps={}
+        self._allPropsInitialized=False
         self._voltage1=None
         self._voltage2=None
         self._voltage3=None
