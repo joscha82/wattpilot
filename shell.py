@@ -38,6 +38,10 @@ def watch_properties(name,value):
     if name in watching_properties:
         print(f"INFO: Property {name} changed to {value}")
 
+def watch_messages(wsapp,msg):
+    if msg.type in watching_messages:
+        print(f"INFO: Message of type {msg.type} received: {msg}")
+
 def process_command(wp, wpi, cmdline):
     """Process a Wattpilot shell command"""
     exit = False
@@ -67,8 +71,10 @@ def process_command(wp, wpi, cmdline):
         print("  info: Print most important infos")
         print("  list: List all known property keys")
         print("  set <name> <value>: Set a property value")
-        print("  watch <name>: Watch property value changes")
-        print("  unwatch <name>: Unwatch property value changes")
+        print("  watch message <type>: Watch message of given message type")
+        print("  watch property <name>: Watch value changes of given property name")
+        print("  unwatch message <type>: Unwatch messages of given message type")
+        print("  unwatch property <name>: Unwatch value changes of given property name")
     elif (cmd == 'info'):
         print(wp)
     elif (cmd == 'list'):
@@ -90,24 +96,41 @@ def process_command(wp, wpi, cmdline):
                 v=str(args[1])
             wp.send_update(args[0],v)
     elif (cmd == 'watch'):
-        if len(args) != 1:
-            print(f"Wrong number of arguments: watch <property>")
-        elif not args[0] in wp.allProps:
-            print(f"Unknown property: {args[0]}")
-        else:
+        if len(args) != 2:
+            print(f"Wrong number of arguments!")
+        elif args[0] == "message" and not args[1] in wpi['messages']:
+            print(f"Unknown message type: {args[1]}")
+        elif args[0] == "message":
+            if len(watching_messages) == 0:
+                wp.register_message_callback(watch_messages)
+            if args[1] not in watching_messages:
+                watching_messages.append(args[1])
+        elif args[0] == "property" and not args[1] in wp.allProps:
+            print(f"Unknown property: {args[1]}")
+        elif args[0] == "property":
             if len(watching_properties) == 0:
                 wp.register_property_callback(watch_properties)
-            if args[0] not in watching_properties:
-                watching_properties.append(args[0])
-    elif (cmd == 'unwatch'):
-        if len(args) != 1:
-            print(f"Wrong number of arguments: watch <property>")
-        elif not args[0] in watching_properties:
-            print(f"Property {args[0]} is not watched")
+            if args[1] not in watching_properties:
+                watching_properties.append(args[1])
         else:
-            watching_properties.remove(args[0])
+            print(f"Unknown watch type: {args[0]}")
+    elif (cmd == 'unwatch'):
+        if len(args) != 2:
+            print(f"Wrong number of arguments!")
+        elif args[0] == "message" and not args[1] in watching_messages:
+            print(f"Message of type '{args[1]}' is not watched")
+        elif args[0] == "message":
+            watching_messages.remove(args[1])
+            if len(watching_messages) == 0:
+                wp.unregister_message_callback()
+        elif args[0] == "property" and not args[1] in watching_properties:
+            print(f"Property with name '{args[1]}' is not watched")
+        elif args[0] == "property":
+            watching_properties.remove(args[1])
             if len(watching_properties) == 0:
                 wp.unregister_property_callback()
+        else:
+            print(f"Unknown watch type: {args[0]}")
     else:
         print(f"Unknown command: {cmd}")
     return exit
@@ -136,6 +159,7 @@ initialized_timeout = 10
 
 # Globals:
 watching_properties = []
+watching_messages = []
 
 # Set debug level:
 logging.basicConfig(level='WARNING')
