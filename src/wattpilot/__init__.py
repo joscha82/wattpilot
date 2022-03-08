@@ -284,6 +284,20 @@ class Wattpilot(object):
         
         _LOGGER.info("Wattpilot connected")
 
+    def register_message_callback(self,callback_fn):
+        """signature of callback_fn: (wsapp,msg)"""
+        self._message_callback = callback_fn
+
+    def unregister_message_callback(self):
+        self._message_callback = None
+
+    def register_property_callback(self,callback_fn):
+        """signature of callback_fn: (name,value)"""
+        self._property_callback = callback_fn
+
+    def unregister_property_callback(self):
+        self._property_callback = None
+
     def set_power(self,power):
         self.send_update("amp",power)
 
@@ -371,6 +385,8 @@ class Wattpilot(object):
                 self._updateAvailable = False
             else:
                 self._updateAvailable = True
+        if self._property_callback != None:
+            self._property_callback(name,value)
 
     def __on_hello(self,message):
         _LOGGER.info("Connected to WattPilot Serial %s",message.serial)
@@ -483,6 +499,8 @@ class Wattpilot(object):
             self.__on_clearInverters(msg)
         if (msg.type == 'updateInverter'): # Contains information of connected Photovoltaik inverter / powermeter
             self.__on_updateInverter(msg)
+        if self._message_callback != None:
+            self._message_callback(wsapp,msg)
 
 
     def __init__(self, ip ,password,serial=None,cloud=False):
@@ -531,6 +549,8 @@ class Wattpilot(object):
         self._carConnected=None
         self._cae=None
         self._cak=None
+        self._message_callback=None
+        self._property_callback=None
 
         self._wst=threading.Thread()
 
