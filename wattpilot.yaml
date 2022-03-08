@@ -41,6 +41,8 @@ messages:
 # - alias: A unique alias that can be used as a better descriptive name for a self-descriptive API
 # - min: Minimum value in case the type is 'integer' or 'float'
 # - max: Maximum value in case the type is 'integer' or 'float'
+# There seems to be a large overlap to the properties of the go-eCharger API as documented here:
+# - https://github.com/goecharger/go-eCharger-API-v1/blob/master/go-eCharger%20API%20v1%20EN.md
 properties:
   abm:
     type: string
