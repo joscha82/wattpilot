@@ -26,6 +26,10 @@ Wattpilot Shell Commands:
   info: Print most important infos
   list: List all known property keys
   set <name> <value>: Set a property value
+  watch message <type>: Watch message of given message type
+  watch property <name>: Watch value changes of given property name
+  unwatch message <type>: Unwatch messages of given message type
+  unwatch property <name>: Unwatch value changes of given property name
 ```
 
 It's also possible to pass a single command to the shell to integrate it into scripts:
