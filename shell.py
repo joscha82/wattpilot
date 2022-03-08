@@ -34,6 +34,10 @@ def printPropInfo(wpi, propName, value):
     if 'example' in propInfo:
         print(f"  Example: {propInfo['example']}")
 
+def watch_properties(name,value):
+    if name in watching_properties:
+        print(f"INFO: Property {name} changed to {value}")
+
 def process_command(wp, wpi, cmdline):
     """Process a Wattpilot shell command"""
     exit = False
@@ -63,6 +67,8 @@ def process_command(wp, wpi, cmdline):
         print("  info: Print most important infos")
         print("  list: List all known property keys")
         print("  set <name> <value>: Set a property value")
+        print("  watch <name>: Watch property value changes")
+        print("  unwatch <name>: Unwatch property value changes")
     elif (cmd == 'info'):
         print(wp)
     elif (cmd == 'list'):
@@ -83,6 +89,25 @@ def process_command(wp, wpi, cmdline):
             else:
                 v=str(args[1])
             wp.send_update(args[0],v)
+    elif (cmd == 'watch'):
+        if len(args) != 1:
+            print(f"Wrong number of arguments: watch <property>")
+        elif not args[0] in wp.allProps:
+            print(f"Unknown property: {args[0]}")
+        else:
+            if len(watching_properties) == 0:
+                wp.register_property_callback(watch_properties)
+            if args[0] not in watching_properties:
+                watching_properties.append(args[0])
+    elif (cmd == 'unwatch'):
+        if len(args) != 1:
+            print(f"Wrong number of arguments: watch <property>")
+        elif not args[0] in watching_properties:
+            print(f"Property {args[0]} is not watched")
+        else:
+            watching_properties.remove(args[0])
+            if len(watching_properties) == 0:
+                wp.unregister_property_callback()
     else:
         print(f"Unknown command: {cmd}")
     return exit
@@ -108,6 +133,9 @@ def wait_timeout(fn, timeout):
 # Timeouts:
 connect_timeout = 10
 initialized_timeout = 10
+
+# Globals:
+watching_properties = []
 
 # Set debug level:
 logging.basicConfig(level='WARNING')
