@@ -2,6 +2,7 @@
 requires = [
     "pyyaml>=5.4.1",
     "setuptools>=42",
-    "wheel"
+    "wheel",
+    "pyreadline"
 ]
 build-backend = "setuptools.build_meta"

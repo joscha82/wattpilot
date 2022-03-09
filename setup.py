@@ -32,7 +32,7 @@ setup(
     package_dir={'': 'src'}, 
     packages=find_packages(where='src'),
     python_requires='>=3.9, <4',
-    install_requires=['websocket-client'],
+    install_requires=['websocket-client','PyYAML','pyreadline'],
     platforms="any",
     license="MIT License",
     project_urls={
