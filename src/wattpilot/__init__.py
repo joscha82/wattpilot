@@ -61,6 +61,16 @@ class Wattpilot(object):
 
 
     @property
+    def allProps(self):
+        """Returns a dictionary with all properties"""
+        return self._allProps
+
+    @property
+    def allPropsInitialized(self):
+        """Returns true, if all properties have been initialized"""
+        return self._allPropsInitialized
+
+    @property
     def cableType(self):
         """Returns the Cable Type (Ampere) of the connected cable"""
         return self._cableType
@@ -259,6 +269,7 @@ class Wattpilot(object):
             ret = ret + "Car Connected: " + str(self.carConnected) + "\n"
             ret = ret + "Charge Status " + str(self.AllowCharging) + "\n"
             ret = ret + "Mode: " + str(self.mode) + "\n"
+            ret = ret + "Power: " + str(self.amp) + "\n"
             ret = ret +  "Charge: " + "%.2f" % self.power + "kW" + " ---- " + str(self.voltage1) + "V/" + str(self.voltage2) + "V/" + str(self.voltage3) + "V" + " -- "
             ret = ret + "%.2f" % self.amps1 + "A/" + "%.2f" % self.amps2 + "A/" + "%.2f" % self.amps3 + "A" + " -- "
             ret = ret + "%.2f" % self.power1 + "kW/" + "%.2f" % self.power2 + "kW/" + "%.2f" % self.power3 + "kW" + "\n"
@@ -272,6 +283,20 @@ class Wattpilot(object):
         self._wst.start()
         
         _LOGGER.info("Wattpilot connected")
+
+    def register_message_callback(self,callback_fn):
+        """signature of callback_fn: (wsapp,msg)"""
+        self._message_callback = callback_fn
+
+    def unregister_message_callback(self):
+        self._message_callback = None
+
+    def register_property_callback(self,callback_fn):
+        """signature of callback_fn: (name,value)"""
+        self._property_callback = callback_fn
+
+    def unregister_property_callback(self):
+        self._property_callback = None
 
     def set_power(self,power):
         self.send_update("amp",power)
@@ -297,6 +322,7 @@ class Wattpilot(object):
 
     def __update_property(self,name,value):
 
+        self._allProps[name] = value
         if name=="acs":
             self._AccessState = Wattpilot.acsValues[value]
 
@@ -359,6 +385,8 @@ class Wattpilot(object):
                 self._updateAvailable = False
             else:
                 self._updateAvailable = True
+        if self._property_callback != None:
+            self._property_callback(name,value)
 
     def __on_hello(self,message):
         _LOGGER.info("Connected to WattPilot Serial %s",message.serial)
@@ -420,6 +448,7 @@ class Wattpilot(object):
             _LOGGER.error("Authentification failed: %s" , message.message)
 
     def __on_DeltaStatus(self,message):
+        self._allPropsInitialized=True # Assume all properties have been initialized when first delta status is received
         props = message.status.__dict__
         for key in props:
             self.__update_property(key,props[key])
@@ -470,6 +499,8 @@ class Wattpilot(object):
             self.__on_clearInverters(msg)
         if (msg.type == 'updateInverter'): # Contains information of connected Photovoltaik inverter / powermeter
             self.__on_updateInverter(msg)
+        if self._message_callback != None:
+            self._message_callback(wsapp,msg)
 
 
     def __init__(self, ip ,password,serial=None,cloud=False):
@@ -494,6 +525,8 @@ class Wattpilot(object):
             self._url = "ws://"+ip+"/ws"
         self.serial = None
         self._connected = False
+        self._allProps={}
+        self._allPropsInitialized=False
         self._voltage1=None
         self._voltage2=None
         self._voltage3=None
@@ -516,6 +549,8 @@ class Wattpilot(object):
         self._carConnected=None
         self._cae=None
         self._cak=None
+        self._message_callback=None
+        self._property_callback=None
 
         self._wst=threading.Thread()
 
