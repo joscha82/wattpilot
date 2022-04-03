@@ -88,7 +88,9 @@ def process_command(wp, wpi, cmdline):
         elif not args[0] in wp.allProps:
             print(f"Unknown property: {args[0]}")
         else:
-            if str(args[1]).isnumeric():
+            if args[1].lower() in ["false","true"]:
+                v=json.loads(args[1].lower())
+            elif str(args[1]).isnumeric():
                 v=int(args[1])
             elif str(args[1]).isdecimal():
                 v=float(args[1])
