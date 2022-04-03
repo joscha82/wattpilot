@@ -46,6 +46,7 @@ messages:
 # There seems to be a large overlap to the properties of the go-eCharger API as documented here:
 # - https://github.com/goecharger/go-eCharger-API-v1/blob/master/go-eCharger%20API%20v1%20EN.md
 # - https://github.com/goecharger/go-eCharger-API-v2/blob/main/apikeys-en.md
+# - also see: https://github.com/syssi/homeassistant-goecharger-mqtt
 properties:
   - key: abm
     jsonType: string
