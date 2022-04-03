@@ -69,6 +69,7 @@ python3 shell.py <wattpilot_ip> <password> "set amp 6"
 
 ## MQTT Support
 
+It is possible to publish JSON messages received from Wattpilot and/or individual property value changes to an MQTT server.
 The easiest way to start the shell with MQTT support is using these environment variables:
 
 ```bash
