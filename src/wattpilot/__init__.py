@@ -435,7 +435,7 @@ class Wattpilot(object):
 
     def __on_AuthSuccess(self,message):
         self._connected = True
-        _LOGGER.info("Authentification successfull")
+        _LOGGER.info("Authentication successful")
 
     def __on_FullStatus(self,message):
         props = message.status.__dict__
@@ -445,7 +445,7 @@ class Wattpilot(object):
     def __on_AuthError(self,message):
         if message.message=="Wrong password":
             self.wsapp.close()
-            _LOGGER.error("Authentification failed: %s" , message.message)
+            _LOGGER.error("Authentication failed: %s" , message.message)
 
     def __on_DeltaStatus(self,message):
         self._allPropsInitialized=True # Assume all properties have been initialized when first delta status is received
@@ -487,9 +487,9 @@ class Wattpilot(object):
             self.__on_auth(wsapp,msg)
         if (msg.type == 'response'): # Response Message -> Received after sending a update and contains result of update
             self.__on_response(msg)
-        if (msg.type == 'authSuccess'): #Auth Success -> Received after sending  correct authentification message
+        if (msg.type == 'authSuccess'): #Auth Success -> Received after sending  correct authentication message
             self.__on_AuthSuccess(msg)
-        if (msg.type == 'authError'): # AUth errot -> Received after sending incorrect authentification message (e.g. wrong password)
+        if (msg.type == 'authError'): # AUth errot -> Received after sending incorrect authentication message (e.g. wrong password)
             self.__on_AuthError(msg)
         if (msg.type == 'fullStatus'): #Full Status -> Received after successfull connection. Contains all Properties of Wattpilot
             self.__on_FullStatus(msg)
@@ -500,7 +500,7 @@ class Wattpilot(object):
         if (msg.type == 'updateInverter'): # Contains information of connected Photovoltaik inverter / powermeter
             self.__on_updateInverter(msg)
         if self._message_callback != None:
-            self._message_callback(wsapp,msg)
+            self._message_callback(self,wsapp,msg,message)
 
 
     def __init__(self, ip ,password,serial=None,cloud=False):
