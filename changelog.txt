@@ -1,2 +1,6 @@
 Version 0.0.1 (2022-02-17)
 - Initial testing release
+
+Version 0.1 (2022-04-20)
+- New Featuer: shell (@ahochsteger)
+- New Feature: mqtt Bridge in shell (@ahochsteger)

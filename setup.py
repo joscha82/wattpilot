@@ -12,7 +12,7 @@ long_description = (here / 'README.md').read_text(encoding='utf-8')
 
 setup(
     name='wattpilot',
-    version='0.0.1',
+    version='0.1',
     description='Python library to connect to a Fronius Wattpilot Wallbox',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -31,12 +31,17 @@ setup(
     keywords='wattpilot',  
     package_dir={'': 'src'}, 
     packages=find_packages(where='src'),
+    entry_points = {
+        'console_scripts': ['wattpilotshell=wattpilot.wattpilotshell:main'],
+    },
+    package_data = { '' : ['wattpilot.yaml'] },
     python_requires='>=3.9, <4',
-    install_requires=['websocket-client','PyYAML','pyreadline'],
+    install_requires=['websocket-client','PyYAML','pyreadline','paho-mqtt'],
     platforms="any",
     license="MIT License",
     project_urls={
         'Bug Reports': 'https://github.com/joscha82/wattpilot/issues',
         'Source': 'https://github.com/joscha82/wattpilot'
-    }
+    },
+    include_package_data=True
 )

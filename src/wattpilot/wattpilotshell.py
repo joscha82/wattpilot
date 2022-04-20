@@ -1,4 +1,5 @@
 import argparse
+from ast import arg
 import json
 import logging
 import os
@@ -6,6 +7,7 @@ import paho.mqtt.client as mqtt
 import readline
 import wattpilot
 import yaml
+import pkgutil
 
 from time import sleep
 from types import SimpleNamespace
@@ -13,6 +15,8 @@ from types import SimpleNamespace
 _LOGGER = logging.getLogger(__name__)
 
 def print_prop_info(wpi, propName, value):
+    global wpi_properties
+
     #propInfo = next((x for x in wpi['properties'] if x['key'] == propName), None)
     propInfo = wpi_properties[propName]
     _LOGGER.debug(f"Property info: {propInfo}")
@@ -42,6 +46,7 @@ def print_prop_info(wpi, propName, value):
         print(f"  Example: {propInfo['example']}")
 
 def watch_properties(name,value):
+    global watch_properties
     if name in watching_properties:
         _LOGGER.info(f"Property {name} changed to {value}")
 
@@ -58,6 +63,7 @@ def cmd_get(wp, args):
         print(wp.allProps[args[0]])
 
 def cmd_mqtt_connect(wp, args):
+    global mqtt_client
     if len(args) != 2:
         _LOGGER.error(f"Wrong number of arguments: mqtt-connect <host> <port>")
     else:
@@ -87,12 +93,15 @@ def cmd_set(wp, args):
         wp.send_update(args[0],v)
 
 def cmd_watch_message(wp, name):
+    global watch_messages
+
     if len(watching_messages) == 0:
         wp.register_message_callback(watch_messages)
     if name not in watching_messages:
         watching_messages.append(name)
 
 def cmd_watch_property(wp, name):
+    global watch_properties
     if len(watching_properties) == 0:
         wp.register_property_callback(watch_properties)
     if name not in watching_properties:
@@ -131,6 +140,11 @@ def cmd_unwatch(wp,args):
         _LOGGER.error(f"Unknown watch type: {args[0]}")
 
 def process_command(wp, wpi, cmdline):
+
+    global cmd_parser
+    global parse
+    global wpi_properties
+
     """Process a Wattpilot shell command"""
     exit = False
     cmd_args = cmd_parser.parse_args(args=cmdline.strip().split(' '))
@@ -205,6 +219,13 @@ def wait_timeout(fn, timeout):
 # MQTT functions
 
 def mqtt_message(wp,wsapp,msg,msg_json):
+    global MQTT_PUBLISH_MESSAGES
+    global MQTT_BASE_TOPIC
+    global MQTT_PUBLISH_PROPERTIES
+    global MQTT_WATCH_PROPERTIES
+    global MQTT_PROPERTY_READ_TOPIC_PATTERN
+    global MQTT_MESSAGE_TOPIC_PATTERN
+
     if mqtt_client == None:
         _LOGGER.debug(f"Skipping MQTT message publishing.")
         return
@@ -228,56 +249,78 @@ def mqtt_message(wp,wsapp,msg,msg_json):
                     .replace("{propName}",prop_name)
                 mqtt_client.publish(property_topic, json.dumps(value))
 
-# Timeout config:
-WATTPILOT_CONNECT_TIMEOUT = int(os.environ.get('WATTPILOT_CONNECT_TIMEOUT','30'))
-WATTPILOT_INITIALIZED_TIMEOUT = int(os.environ.get('WATTPILOT_INITIALIZED_TIMEOUT','30'))
 
-# Globals:
-watching_properties = []
-watching_messages = []
-mqtt_client = None
+def main():
+    # Timeout config:
+    WATTPILOT_CONNECT_TIMEOUT = int(os.environ.get('WATTPILOT_CONNECT_TIMEOUT','30'))
+    WATTPILOT_INITIALIZED_TIMEOUT = int(os.environ.get('WATTPILOT_INITIALIZED_TIMEOUT','30'))
 
-# MQTT config:
-MQTT_ENABLED = os.environ.get('MQTT_ENABLED','false')
-if MQTT_ENABLED == "true":
-    MQTT_CLIENT_ID = os.environ.get('MQTT_CLIENT_ID','wattpilot2mqtt')
-    MQTT_HA_DISCOVERY_ENABLED = os.environ.get('MQTT_HA_DISCOVERY_ENABLED','false')
-    MQTT_HOST = os.environ.get('MQTT_HOST')
-    MQTT_PORT = int(os.environ.get('MQTT_PORT','1883'))
-    MQTT_BASE_TOPIC = os.environ.get('MQTT_BASE_TOPIC','wattpilot')
-    MQTT_PUBLISH_MESSAGES = os.environ.get('MQTT_PUBLISH_MESSAGES','true')
-    MQTT_MESSAGE_TOPIC_PATTERN = os.environ.get('MQTT_MESSAGE_TOPIC_PATTERN','{baseTopic}/{serialNumber}/messages/{messageType}')
-    MQTT_PUBLISH_PROPERTIES = os.environ.get('MQTT_PUBLISH_PROPERTIES','false')
-    MQTT_WATCH_PROPERTIES = os.environ.get('MQTT_WATCH_PROPERTIES','amp car fna lmo sse').split(sep=' ')
-    MQTT_PROPERTY_READ_TOPIC_PATTERN = os.environ.get('MQTT_PROPERTY_READ_TOPIC_PATTERN','{baseTopic}/{serialNumber}/properties/{propName}')
-    MQTT_PROPERTY_SET_TOPIC_PATTERN = os.environ.get('MQTT_PROPERTY_SET_TOPIC_PATTERN','{baseTopic}/{serialNumber}/properties/{propName}/set')
-    mqtt_client = mqtt.Client(MQTT_CLIENT_ID)
-    mqtt_client.connect(MQTT_HOST, MQTT_PORT)
+    # Globals:
+    global cmd_parser
+    global parser
+    global wpi_properties
+    global wpi_messages
+    global mqtt_client
+    global watching_messages
+    global watching_properties
+    global MQTT_PUBLISH_MESSAGES
+    global MQTT_BASE_TOPIC
+    global MQTT_PUBLISH_PROPERTIES
+    global MQTT_WATCH_PROPERTIES
+    global MQTT_PROPERTY_READ_TOPIC_PATTERN
+    global MQTT_MESSAGE_TOPIC_PATTERN
 
 
-# Set debug level:
-logging.basicConfig(level=os.environ.get('WATTPILOT_DEBUG_LEVEL','INFO'))
+    watching_properties = []
+    watching_messages = []
+    mqtt_client = None
 
-# Setup readline
-readline.parse_and_bind("tab: complete")
-readline.set_completer(complete) 
+    # MQTT config:
+    MQTT_ENABLED = os.environ.get('MQTT_ENABLED','false')
+    if MQTT_ENABLED == "true":
+        MQTT_CLIENT_ID = os.environ.get('MQTT_CLIENT_ID','wattpilot2mqtt')
+        MQTT_HA_DISCOVERY_ENABLED = os.environ.get('MQTT_HA_DISCOVERY_ENABLED','false')
+        MQTT_HOST = os.environ.get('MQTT_HOST')
+        MQTT_PORT = int(os.environ.get('MQTT_PORT','1883'))
+        MQTT_BASE_TOPIC = os.environ.get('MQTT_BASE_TOPIC','wattpilot')
+        MQTT_PUBLISH_MESSAGES = os.environ.get('MQTT_PUBLISH_MESSAGES','true')
+        MQTT_MESSAGE_TOPIC_PATTERN = os.environ.get('MQTT_MESSAGE_TOPIC_PATTERN','{baseTopic}/{serialNumber}/messages/{messageType}')
+        MQTT_PUBLISH_PROPERTIES = os.environ.get('MQTT_PUBLISH_PROPERTIES','false')
+        MQTT_WATCH_PROPERTIES = os.environ.get('MQTT_WATCH_PROPERTIES','amp car fna lmo sse').split(sep=' ')
+        MQTT_PROPERTY_READ_TOPIC_PATTERN = os.environ.get('MQTT_PROPERTY_READ_TOPIC_PATTERN','{baseTopic}/{serialNumber}/properties/{propName}')
+        MQTT_PROPERTY_SET_TOPIC_PATTERN = os.environ.get('MQTT_PROPERTY_SET_TOPIC_PATTERN','{baseTopic}/{serialNumber}/properties/{propName}/set')
+        mqtt_client = mqtt.Client(MQTT_CLIENT_ID)
+        mqtt_client.connect(MQTT_HOST, MQTT_PORT)
 
-# Commandline argument parser:
-parser = argparse.ArgumentParser()
-parser.add_argument("ip", help = "IP of Wattpilot Device", nargs="?")
-parser.add_argument("password", help = "Password of Wattpilot", nargs="?")
-parser.add_argument("cmdline", help = "Optional shell command", nargs="?")
-args = parser.parse_args()
 
-# Wattpilot shell command parser:
-cmd_parser = argparse.ArgumentParser()
-cmd_parser.add_argument("cmd", help = "Command")
-cmd_parser.add_argument("args", help = "Arguments", nargs='*')
+    # Set debug level:
+    logging.basicConfig(level=os.environ.get('WATTPILOT_DEBUG_LEVEL','INFO'))
 
-# Read Wattpilot config:
-with open("wattpilot.yaml", 'r') as stream:
+    # Setup readline
+    readline.parse_and_bind("tab: complete")
+    readline.set_completer(complete) 
+
+    # Commandline argument parser:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("ip", help = "IP of Wattpilot Device", nargs="?")
+    parser.add_argument("password", help = "Password of Wattpilot", nargs="?")
+    parser.add_argument("cmdline", help = "Optional shell command", nargs="?")
+
+    args = parser.parse_args()
+
+    # Wattpilot shell command parser:
+    cmd_parser = argparse.ArgumentParser()
+    cmd_parser.add_argument("cmd", help = "Command")
+    cmd_parser.add_argument("args", help = "Arguments", nargs='*')
+
+    # Read Wattpilot config:
+
+    wattpilotAPIDesc = pkgutil.get_data(__name__, "ressources/wattpilot.yaml")
+    #wattpilotAPIDesc = "wattpilot.yaml"
+
+
     try:
-        wpi=yaml.safe_load(stream)
+        wpi=yaml.safe_load(wattpilotAPIDesc)
         wpi_messages = dict(zip(
             [x["key"] for x in wpi["messages"]],
             [x for x in wpi["messages"]],
@@ -289,33 +332,37 @@ with open("wattpilot.yaml", 'r') as stream:
     except yaml.YAMLError as exc:
         print(exc)
 
-# Connect to Wattpilot:
-ip = args.ip or os.environ.get('WATTPILOT_HOST')
-password = args.password or os.environ.get('WATTPILOT_PASSWORD')
-wp = wattpilot.Wattpilot(ip,password)
+    # Connect to Wattpilot:
+    ip = args.ip or os.environ.get('WATTPILOT_HOST')
+    password = args.password or os.environ.get('WATTPILOT_PASSWORD')
+    wp = wattpilot.Wattpilot(ip,password)
 
-# Enable MQTT integration:
-if MQTT_ENABLED == "true":
-    _LOGGER.debug(f"Registering message callback for MQTT integration.")
-    wp.register_message_callback(mqtt_message)
-wp.connect()
+    # Enable MQTT integration:
+    if MQTT_ENABLED == "true":
+        _LOGGER.debug(f"Registering message callback for MQTT integration.")
+        wp.register_message_callback(mqtt_message)
+    wp.connect()
 
-# Wait for connection and initializon:
-wait_timeout(lambda: wp.connected, WATTPILOT_CONNECT_TIMEOUT) or exit("ERROR: Timeout while connecting to Wattpilot!")
-wait_timeout(lambda: wp.allPropsInitialized, WATTPILOT_INITIALIZED_TIMEOUT) or exit("ERROR: Timeout while waiting for property initialization!")
+    # Wait for connection and initializon:
+    wait_timeout(lambda: wp.connected, WATTPILOT_CONNECT_TIMEOUT) or exit("ERROR: Timeout while connecting to Wattpilot!")
+    wait_timeout(lambda: wp.allPropsInitialized, WATTPILOT_INITIALIZED_TIMEOUT) or exit("ERROR: Timeout while waiting for property initialization!")
 
-# Process commands:
-if args.cmdline:
-    # Process commands passed on the commandline
-    process_command(wp,wpi,args.cmdline)
-else:
-    # Start interactive shell
-    process_command(wp,wpi,"info")
-    exit=False
-    while not exit:
-        try:
-            command = input('> ')
-        except EOFError as e:
-            command = "exit"
-            print()
-        exit = process_command(wp,wpi,command)
+    # Process commands:
+    if args.cmdline:
+        # Process commands passed on the commandline
+        process_command(wp,wpi,args.cmdline)
+    else:
+        # Start interactive shell
+        process_command(wp,wpi,"info")
+        exit=False
+        while not exit:
+            try:
+                command = input('> ')
+            except EOFError as e:
+                command = "exit"
+                print()
+            exit = process_command(wp,wpi,command)
+
+
+if __name__ == '__main__':
+    main()

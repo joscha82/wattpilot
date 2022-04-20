@@ -17,7 +17,7 @@ Run the interactive shell
 
 ```bash
 # Usage:
-python3 shell.py <wattpilot_ip> <password>
+wattpilotshell <wattpilot_ip> <password>
 > help
 Wattpilot Shell Commands:
   dump: Dump all property values
@@ -38,11 +38,11 @@ It's also possible to pass a single command to the shell to integrate it into sc
 
 ```bash
 # Usage:
-python3 shell.py <wattpilot_ip> <password> "<command> <args...>"
+wattpilotshell <wattpilot_ip> <password> "<command> <args...>"
 
 # Examples:
-python3 shell.py <wattpilot_ip> <password> "get amp"
-python3 shell.py <wattpilot_ip> <password> "set amp 6"
+wattpilotshell <wattpilot_ip> <password> "get amp"
+wattpilotshell <wattpilot_ip> <password> "set amp 6"
 ```
 
 ## Environment Variables
@@ -77,5 +77,5 @@ export MQTT_ENABLED=true
 export MQTT_HOST=<mqtt_host>
 export WATTPILOT_HOST=<wattpilot_ip>
 export WATTPILOT_PASSWORD=<wattpilot_password>
-python3 shell.py
+wattpilotshell
 ```
