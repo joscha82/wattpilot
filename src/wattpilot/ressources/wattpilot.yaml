@@ -17,11 +17,13 @@ messages:
     description: Received after sending a correct authentication message
   - key: authError
     title: Auth Error
-    description: Received after sending an incorrect authentication message (e.g.
+    description:
+      Received after sending an incorrect authentication message (e.g.
       wrong password)
   - key: fullStatus
     title: Full Status
-    description: Set of messages received after successful connection. These messages
+    description:
+      Set of messages received after successful connection. These messages
       contain all properties of Wattpilot.
   - key: deltaStatus
     title: Delta Status
@@ -43,22 +45,37 @@ messages:
 # - alias: A unique alias that can be used as a better descriptive name for a self-descriptive API
 # - min: Minimum value in case the type is 'integer' or 'float'
 # - max: Maximum value in case the type is 'integer' or 'float'
+# - homeAssistant: Config for Home Assistant
+#   - component: The integration component for Home Assistant to be used (default: sensor)
+#   - config: The discovery config for the property
+#     - device_class: The device class to be used (see https://developers.home-assistant.io/docs/core/entity/sensor/#available-device-classes)
+#     - unit_of_measurement: The unit of measurement to be used (see https://developers.home-assistant.io/docs/core/entity/sensor/#available-device-classes)
+#     - state_class: The state class to be used - esp. for energy values (see https://developers.home-assistant.io/docs/core/entity/sensor/#available-state-classes)
+#     - enabled_by_default: Set to 'false' if the property should not be enabled by default (default: true)
 # There seems to be a large overlap to the properties of the go-eCharger API as documented here:
 # - https://github.com/goecharger/go-eCharger-API-v1/blob/master/go-eCharger%20API%20v1%20EN.md
 # - https://github.com/goecharger/go-eCharger-API-v2/blob/main/apikeys-en.md
-# - also see: https://github.com/syssi/homeassistant-goecharger-mqtt
+# - also see:
+# - https://github.com/syssi/homeassistant-goecharger-mqtt
+# - https://www.fronius.com/~/downloads/Solar%20Energy/Operating%20Instructions/42%2C0426%2C0400%2CEN.pdf
 properties:
   - key: abm
     jsonType: string
     example: <SOME_MAC>
   - key: acs
     alias: accessState
+    title: Access State
     jsonType: integer
     example: 0
     rw: R/W
     type: uint8
     category: Config
     description: access_control user setting (Open=0, Wait=1)
+    valueMap:
+      "0": Open
+      "1": Wait
+    homeAssistant:
+      component: select
   - key: acu
     jsonType: integer
     example: 6
@@ -112,13 +129,25 @@ properties:
     jsonType: integer
     example: 6
     title: Charging Current
-    description: requestedCurrent in Ampere, used for display on LED ring and logic
+    description:
+      requestedCurrent in Ampere, used for display on LED ring and logic
       calculations
     min: 6
     max: 16
     rw: R/W
     type: uint8
     category: Config
+    # Home Assistant discovery infos:
+    homeAssistant:
+      component: select
+      config:
+        device_class: current
+        options:
+          - "6"
+          - "10"
+          - "12"
+          - "16"
+        unit_of_measurement: A
   - key: amt
     alias: temperatureCurrentLimit
     jsonType: integer
@@ -129,12 +158,38 @@ properties:
     description: temperatureCurrentLimit
   - key: apd
     jsonType: object
-    example: project_name='wattpilot_hw4+', version='36.3', secure_version=0, timestamp='Jan
-      31 2022 22:51:39', idf_ver='v5.0-dev-1103-ga9ef558d', sha256='<some_sha256>'
+    example:
+      {
+        "project_name": "wattpilot_hw4+",
+        "version": "36.3",
+        "secure_version": 0,
+        "timestamp": "Jan 31 2022 22:51:39",
+        "idf_ver": "v5.0-dev-1103-ga9ef558d",
+        "sha256": "<some_sha256>",
+      }
     rw: R
     type: object
     category: Constant
     description: firmware description
+    childProps:
+      - key: apd_project_name
+        valueRef: project_name
+        jsonType: string
+      - key: apd_version
+        valueRef: version
+        jsonType: string
+      - key: apd_secure_version
+        valueRef: secure_version
+        jsonType: integer
+      - key: apd_timestamp
+        valueRef: timestamp
+        jsonType: string
+      - key: apd_idf_ver
+        valueRef: idf_ver
+        jsonType: string
+      - key: apd_sha256
+        valueRef: sha256
+        jsonType: string
   - key: arv
     alias: appRecommendedVersion
     jsonType: string
@@ -142,7 +197,8 @@ properties:
     rw: R
     type: string
     category: Constant
-    description: app recommended version (used to show in the app that the app is
+    description:
+      app recommended version (used to show in the app that the app is
       outdated)
   - key: asc
     jsonType: boolean
@@ -152,21 +208,37 @@ properties:
     example: 6
   - key: awc
     alias: awattarCountry
+    title: Awattar Country
     jsonType: integer
     example: 0
     rw: R/W
     type: uint8
     category: Config
     description: awattar country (Austria=0, Germany=1)
+    valueMap:
+      "0": Austria
+      "1": Germany
+    homeAssistant:
+      component: select
   - key: awcp
     alias: awattarCurrentPrice
     jsonType: object
-    example: start=1646560800, end=1646564400, marketprice=34.625
+    example: { "start": 1650567600, "end": 1650571200, "marketprice": 22.044 }
     title: Awattar Current Price?
     rw: R
     type: optional<object>
     category: Status
     description: awattar current price
+    childProps:
+      - key: awcp_start
+        valueRef: start
+        jsonType: integer
+      - key: awcp_end
+        valueRef: end
+        jsonType: integer
+      - key: awcp_marketprice
+        valueRef: marketprice
+        jsonType: float
   - key: awp
     alias: awattarMaxPrice
     jsonType: integer
@@ -175,14 +247,22 @@ properties:
     type: float
     category: Config
     description: awattarMaxPrice in ct
+    homeAssistant:
+      config:
+        value_template: "{{ value | float | round(3) }}"
   - key: awpl
     alias: awattarPriceList
     title: Awattar Price List
-    description: awattar price list, timestamps are measured in unix-time, seconds
+    description:
+      awattar price list, timestamps are measured in unix-time, seconds
       since 1970
     jsonType: array
     itemType: object
-    example: start=1646560800, end=1646564400, marketprice=34.625
+    example:
+      [
+        { "start": 1650567600, "end": 1650571200, "marketprice": 22.044 },
+        { "start": 1650571200, "end": 1650574800, "marketprice": 19.971 },
+      ]
     rw: R/W
     type: array
     category: Status
@@ -202,31 +282,51 @@ properties:
     example: false
   - key: cak
     jsonType: string
-    example: ''
+    example: ""
   - key: car
-    alias: carConnected
+    alias: carState
+    title: Car State
     jsonType: integer
     example: 1
     rw: R
     type: optional<uint8>
     category: Status
-    description: carState, null if internal error (Unknown/Error=0, Idle=1, Charging=2,
+    description:
+      carState, null if internal error (Unknown/Error=0, Idle=1, Charging=2,
       WaitCar=3, Complete=4, Error=5)
+    valueMap:
+      "0": Unknown/Error
+      "1": Idle
+      "2": Charging
+      "3": WaitCar
+      "4": Complete
+      "5": Error
+    homeAssistant:
   - key: cards
     alias: registeredCards
     title: RFID Card List
     jsonType: array
     itemType: object
-    example: name='User 1', energy=0, cardId=True
+    example:
+      [
+        { "name": "User 1", "energy": 0, "cardId": true },
+        { "name": "User 2", "energy": 0, "cardId": false },
+      ]
     description: Registered RFID cards for different users
   - key: cbl
     alias: cableCurrentLimit
+    title: Cable Current Limit
     jsonType: integer
     example: 20
     rw: R
     type: optional<int>
     category: Status
     description: cable_current_limit in A
+    homeAssistant:
+      component: sensor
+      config:
+        device_class: current
+        unit_of_measurement: A
   - key: cbm
     jsonType: unknown
     example: None
@@ -241,25 +341,43 @@ properties:
   - key: cch
     alias: colorCharging
     jsonType: string
-    example: '#00FFF'
+    example: "#00FFF"
     rw: R/W
     type: string
     category: Config
-    description: 'color_charging, format: #RRGGBB'
+    description: "color_charging, format: #RRGGBB"
   - key: cci
     jsonType: object
-    example: id='<some_numeric_id>', paired=True, deviceFamily='DataManager', label='<some_name>',
-      model='PILOT', commonName='pilot-0.5e-1670626369628648631_1599713577', ip='<some_ip>',
-      connected=True, reachableMdns=True, reachableUdp=False, reachableHttp=True,
-      status=0, message='ok'
+    example:
+      {
+        "id": "<some_numeric_id>",
+        "paired": true,
+        "deviceFamily": "DataManager",
+        "label": "<some_name>",
+        "model": "PILOT",
+        "commonName": "pilot-0.5e-1670626369628648631_1599713577",
+        "ip": "<some_ip>",
+        "connected": true,
+        "reachableMdns": true,
+        "reachableUdp": true,
+        "reachableHttp": true,
+        "status": 0,
+        "message": "ok",
+      }
   - key: cco
     alias: carConsumption
-    jsonType: integer
+    title: Car Consumption
+    jsonType: float
     example: 24
     rw: R/W
     type: double
     category: Config
-    description: car consumption (only stored for app)
+    description: car consumption in kWh for 100km (only stored for app)
+    homeAssistant:
+      component: number
+      config:
+        device_class: energy
+        unit_of_measurement: kWh
   - key: ccu
     alias: chargeControllerUpdateProgress
     jsonType: unknown
@@ -271,45 +389,81 @@ properties:
   - key: ccw
     alias: currentlyConnectedWifi
     jsonType: object
-    example: ssid='<SOME_SSID>', encryptionType=3, pairwiseCipher=4, groupCipher=4,
-      b=True, g=True, n=True, lr=False, wps=False, ftmResponder=False, ftmInitiator=False,
-      channel=6, bssid='<SOME_BSSID>', ip='<some_ip4>', netmask='255.255.255.0', gw='<some_ip4>',
-      ipv6=['<some_ip6>'], dns0='<some_ip4>', dns1='0.0.0.0', dns2='0.0.0.0'
+    example:
+      {
+        "ssid": "<SOME_SSID>",
+        "encryptionType": 3,
+        "pairwiseCipher": 4,
+        "groupCipher": 4,
+        "b": true,
+        "g": true,
+        "n": true,
+        "lr": false,
+        "wps": false,
+        "ftmResponder": false,
+        "ftmInitiator": false,
+        "channel": 6,
+        "bssid": "<SOME_BSSID>",
+        "ip": "<some_ip4>",
+        "netmask": "255.255.255.0",
+        "gw": "<some_ip4>",
+        "ipv6": ["<some_ip6>", "<some_ip6>"],
+        "dns0": "<some_ip4>",
+        "dns1": "0.0.0.0",
+        "dns2": "0.0.0.0",
+      }
     rw: R
     type: optional<object>
     category: Status
     description: Currently connected WiFi
   - key: cdi
     alias: chargingDurationInfo
+    title: Charging Duration Info
     jsonType: object
-    example: type=1, value=<some_large_integer>
+    example: { "type": 1, "value": 11554770 }
     rw: R
     type: object
     category: Status
-    description: charging duration info (null=no charging in progress, type=0 counter
+    description:
+      charging duration info (null=no charging in progress, type=0 counter
       going up, type=1 duration in ms)
+    homeAssistant:
+      config:
+        enabled_by_default: false
+    childProps:
+      - key: cdi_type
+        valueRef: type
+        title: Charging Duration Type
+        jsonType: integer
+        valueMap:
+          "0": Counter
+          "1": Duration
+      - key: cdi_value
+        valueRef: value
+        title: Charging Duration Value
+        jsonType: integer
   - key: cdv
     jsonType: unknown
     example: None
   - key: cfi
     alias: colorFinished
     jsonType: string
-    example: '#00FF00'
+    example: "#00FF00"
     rw: R/W
     type: string
     category: Config
-    description: 'color_finished, format: #RRGGBB'
+    description: "color_finished, format: #RRGGBB"
   - key: chr
     jsonType: boolean
     example: true
   - key: cid
     alias: colorIdle
     jsonType: string
-    example: '#0000FF'
+    example: "#0000FF"
     rw: R/W
     type: string
     category: Config
-    description: 'color_idle, format: #RRGGBB'
+    description: "color_idle, format: #RRGGBB"
   - key: clp
     alias: currentLimitPresets
     jsonType: array
@@ -334,7 +488,8 @@ properties:
     rw: R
     type: bool
     category: Status
-    description: CP enable request. cpd=0 triggers the charge ctrl to set cpe=0 once
+    description:
+      CP enable request. cpd=0 triggers the charge ctrl to set cpe=0 once
       processed
   - key: csca
     jsonType: integer
@@ -349,21 +504,31 @@ properties:
     description: car type, free text string (max. 64 characters, only stored for app)
   - key: cus
     alias: cableUnlockStatus
+    title: Cable Unlock Status
     jsonType: integer
     example: 1
     rw: R
     type: uint8
     category: Status
-    description: Cable unlock status (Unknown=0, Unlocked=1, UnlockFailed=2, Locked=3,
+    description:
+      Cable unlock status (Unknown=0, Unlocked=1, UnlockFailed=2, Locked=3,
       LockFailed=4, LockUnlockPowerout=5)
+    valueMap:
+      "0": Unknown
+      "1": Unlocked
+      "2": UnlockFailed
+      "3": Locked
+      "4": LockFailed
+      "5": LockUnlockPowerout
+    homeAssistant:
   - key: cwc
     alias: colorWaitCar
     jsonType: string
-    example: '#FFFF00'
+    example: "#FFFF00"
     rw: R/W
     type: string
     category: Config
-    description: 'color_waitcar, format: #RRGGBB'
+    description: "color_waitcar, format: #RRGGBB"
   - key: cwe
     alias: cloudWsEnabled
     jsonType: boolean
@@ -413,32 +578,75 @@ properties:
     example: https://data.wattpilot.io/export?e=<some_token>
   - key: dns
     jsonType: object
-    example: dns='0.0.0.0'
+    example: { "dns": "0.0.0.0" }
   - key: dwo
     jsonType: unknown
     example: None
     rw: R/W
     type: optional<double>
     category: Config
-    description: charging energy limit, measured in Wh, null means disabled, not the
+    description:
+      charging energy limit, measured in Wh, null means disabled, not the
       next trip energy
   - key: ecf
     alias: espCpuFreq
     jsonType: object
-    example: source=1, source_freq_mhz=320, div=2, freq_mhz=160
+    example: { "source": 1, "source_freq_mhz": 320, "div": 2, "freq_mhz": 160 }
     rw: R
     type: object
     category: Constant
-    description: 'ESP CPU freq (source: XTAL=0, PLL=1, 8M=2, APLL=3)'
+    description: "ESP CPU freq (source: XTAL=0, PLL=1, 8M=2, APLL=3)"
+    childProps:
+      - key: ecf_source
+        valueRef: source
+        jsonType: integer
+        valueMap:
+          "0": XTAL
+          "1": PLL
+          "2": 8M
+          "3": APLL
+      - key: ecf_source_freq_mhz
+        valueRef: source_freq_mhz
+        jsonType: integer
+      - key: ecf_div
+        valueRef: div
+        jsonType: integer
+      - key: ecf_freq_mhz
+        valueRef: freq_mhz
+        jsonType: integer
   - key: eci
     alias: espChipInfo
     jsonType: object
-    example: model=1, features=50, cores=2, revision=3
+    example: { "model": 1, "features": 50, "cores": 2, "revision": 3 }
     rw: R
     type: object
     category: Constant
-    description: 'ESP chip info (model: ESP32=1, ESP32S2=2, ESP32S3=4, ESP32C3=5;
-      features: EMB_FLASH=bit0, WIFI_BGN=bit1, BLE=bit4, BT=bit5)'
+    description:
+      "ESP chip info (model: ESP32=1, ESP32S2=2, ESP32S3=4, ESP32C3=5;
+      features: EMB_FLASH=bit0, WIFI_BGN=bit1, BLE=bit4, BT=bit5)"
+    childProps:
+      - key: eci_model
+        valueRef: model
+        jsonType: integer
+        valueMap:
+          "1": ESP32
+          "2": ESP32S2
+          "4": ESP32S3
+          "5": ESP32C3
+      - key: eci_features
+        valueRef: features
+        jsonType: integer
+        bitMap:
+          "0": EMB_FLASH
+          "1": WIFI_BGN
+          "4": BLE
+          "5": BT
+      - key: eci_cores
+        valueRef: cores
+        jsonType: integer
+      - key: eci_revision
+        valueRef: revision
+        jsonType: string
   - key: efh
     alias: espFreeHeap
     jsonType: integer
@@ -470,9 +678,39 @@ properties:
     rw: R
     type: object
     category: Constant
-    description: 'ESP Flash info (spi_mode: QIO=0, QOUT=1, DIO=2, DOUT=3, FAST_READ=4,
+    description:
+      "ESP Flash info (spi_mode: QIO=0, QOUT=1, DIO=2, DOUT=3, FAST_READ=4,
       SLOW_READ=5; spi_speed: 40M=0, 26M=1, 20M=2, 80M=15; spi_size: 1MB=0, 2MB=1,
-      4MB=2, 8MB=3, 16MB=4, MAX=5)'
+      4MB=2, 8MB=3, 16MB=4, MAX=5)"
+    childProps:
+      - key: efi_spi_mode
+        valueRef: spi_mode
+        jsonType: integer
+        valueMap:
+          "0": QIO
+          "1": QOUT
+          "2": DIO
+          "3": DOUT
+          "4": FAST_READ
+          "5": SLOW_READ
+      - key: efi_spi_speed
+        valueRef: spi_speed
+        jsonType: integer
+        valueMap:
+          "0": 40M
+          "1": 26M
+          "2": 20M
+          "15": 80M
+      - key: efi_spi_size
+        valueRef: spi_size
+        jsonType: integer
+        valueMap:
+          "0": 1MB
+          "1": 2MB
+          "2": 4MB
+          "3": 8MB
+          "4": 16MB
+          "5": MAX
   - key: ehs
     alias: espHeapSize
     jsonType: integer
@@ -499,16 +737,26 @@ properties:
     description: ESP max size of allocated heap block since boot
   - key: ens
     jsonType: string
-    example: ''
+    example: ""
   - key: err
     alias: errorState
+    title: Error State
     jsonType: integer
     example: 0
     rw: R
     type: optional<uint8>
     category: Status
-    description: error, null if internal error (Unknown/Error=0, Idle=1, Charging=2,
+    description:
+      error, null if internal error (Unknown/Error=0, Idle=1, Charging=2,
       WaitCar=3, Complete=4, Error=5)
+    valueMap:
+      "0": Unknown/Error
+      "1": Idle
+      "2": Charging
+      "3": WaitCar
+      "4": Complete
+      "5": Error
+    homeAssistant:
   - key: esk
     alias: energySetKwh
     jsonType: boolean
@@ -518,34 +766,69 @@ properties:
     category: Config
     description: energy set kwh (only stored for app)
   - key: esr
+    alias: rtcResetReasons
+    title: RTC Reset Reasons
     jsonType: array
     example: [12, 12]
     itemType: integer
     rw: R
     type: array
     category: Status
-    description: rtc_get_reset_reason for core 0 and 1 (NO_MEAN=0, POWERON_RESET=1,
+    description:
+      rtc_get_reset_reason for core 0 and 1 (NO_MEAN=0, POWERON_RESET=1,
       SW_RESET=3, OWDT_RESET=4, DEEPSLEEP_RESET=5, SDIO_RESET=6, TG0WDT_SYS_RESET=7,
       TG1WDT_SYS_RESET=8, RTCWDT_SYS_RESET=9, INTRUSION_RESET=10, TGWDT_CPU_RESET=11,
       SW_CPU_RESET=12, RTCWDT_CPU_RESET=13, EXT_CPU_RESET=14, RTCWDT_BROWN_OUT_RESET=15,
       RTCWDT_RTC_RESET=16)
+    valueMap:
+      "0": NO_MEAN
+      "1": POWERON_RESET
+      "3": SW_RESET
+      "4": OWDT_RESET
+      "5": DEEPSLEEP_RESET
+      "6": SDIO_RESET
+      "7": TG0WDT_SYS_RESET
+      "8": TG1WDT_SYS_RESET
+      "9": RTCWDT_SYS_RESET
+      "10": INTRUSION_RESET
+      "11": TGWDT_CPU_RESET
+      "12": SW_CPU_RESET
+      "13": RTCWDT_CPU_RESET
+      "14": EXT_CPU_RESET
+      "15": RTCWDT_BROWN_OUT_RESET
+      "16": RTCWDT_RTC_RESET
   - key: eto
     alias: energyCounterTotal
+    title: Energy Counter Total
     jsonType: integer
     example: 1076098
     rw: R
     type: uint64
     category: Status
     description: energy_total, measured in Wh
+    homeAssistant:
+      component: sensor
+      config:
+        device_class: energy
+        state_class: total
+        unit_of_measurement: Wh
   - key: etop
     alias: energyTotalPersisted
+    title: Energy Total Persisted
     jsonType: integer
     example: 1076098
     rw: R
     type: uint64
     category: Status
-    description: energy_total persisted, measured in Wh, without the extra magic to
+    description:
+      energy_total persisted, measured in Wh, without the extra magic to
       have live values
+    homeAssistant:
+      component: sensor
+      config:
+        device_class: energy
+        state_class: total
+        unit_of_measurement: Wh
   - key: facwak
     alias: factoryWifiApKey
     jsonType: boolean
@@ -561,14 +844,24 @@ properties:
     jsonType: boolean
     example: false
   - key: fbuf_age
+    title: FBuf Age
     jsonType: integer
     example: 93639347
   - key: fbuf_akkuMode
+    title: Fronius Akku Mode
     jsonType: integer
     example: 1
   - key: fbuf_akkuSOC
+    title: Fronius Battery SoC
+    description: State of charge of the PV battery
     jsonType: float
     example: 72.5
+    homeAssistant:
+      component: sensor
+      config:
+        device_class: battery
+        unit_of_measurement: "%"
+        value_template: "{{ value | float | round(1) }}"
   - key: fbuf_ohmpilotState
     jsonType: unknown
     example: None
@@ -579,14 +872,36 @@ properties:
     jsonType: unknown
     example: None
   - key: fbuf_pAkku
+    title: Fronius Akku Power
+    description: Power that is consumed from the PV battery (or delivered into the battery, if negative)
     jsonType: float
     example: -3985.899
+    homeAssistant:
+      component: sensor
+      config:
+        device_class: power
+        unit_of_measurement: W
   - key: fbuf_pGrid
+    title: Fronius Grid Power
+    description: Power consumed from grid (or delivered to grid, if negative)
     jsonType: integer
     example: 11
+    homeAssistant:
+      component: sensor
+      config:
+        device_class: power
+        unit_of_measurement: W
+        value_template: "{{ value | float | round(2) }}"
   - key: fbuf_pPv
+    title: Fronius PV Power
+    description: PV power that is produced
     jsonType: float
     example: 4701.407
+    homeAssistant:
+      component: sensor
+      config:
+        device_class: power
+        unit_of_measurement: W
   - key: fcc
     jsonType: boolean
     example: true
@@ -595,23 +910,34 @@ properties:
     example: true
   - key: fem
     alias: flashEncryptionMode
+    title: Flash Encryption Mode
     jsonType: integer
     example: 2
     rw: R
     type: uint8
     category: Constant
     description: Flash Encryption Mode (Disabled=0, Development=1, Release=2)
+    valueMap:
+      "0": Disabled
+      "1": Development
+      "2": Release
   - key: ferm
     jsonType: integer
     example: 1
   - key: ffb
     alias: lockFeedback
+    title: Lock Feedback
     jsonType: integer
     example: 0
     rw: R
     type: uint8
     category: Status
     description: lock feedback (NoProblem=0, ProblemLock=1, ProblemUnlock=2)
+    valueMap:
+      "0": NoProblem
+      "1": ProblemLock
+      "2": ProblemUnlock
+    homeAssistant:
   - key: ffba
     alias: lockFeedbackAge
     jsonType: unknown
@@ -633,12 +959,18 @@ properties:
     example: true
   - key: fhz
     alias: frequency
+    title: Frequency
     jsonType: float
     example: 49.815
     rw: R
     type: optional<float>
     category: Status
-    description: Stromnetz frequency (~50Hz) or 0 if unknown
+    description: Power grid frequency (~50Hz) or 0 if unknown
+    homeAssistant:
+      config:
+        device_class: frequency
+        unit_of_measurement: Hz
+        enabled_by_default: false # Disabled by default since it produces a new value every second
   - key: fi23
     jsonType: boolean
     example: true
@@ -673,12 +1005,19 @@ properties:
     example: 20
   - key: frc
     alias: forceState
+    title: Force State
     jsonType: integer
     example: 0
     rw: R/W
     type: uint8
     category: Config
     description: forceState (Neutral=0, Off=1, On=2)
+    valueMap:
+      "0": "Neutral"
+      "1": "Off"
+      "2": "On"
+    homeAssistant:
+      component: select
   - key: frci
     jsonType: boolean
     example: true
@@ -705,8 +1044,19 @@ properties:
     category: Status
     description: force single phase toggle wished since
   - key: fst
+    title: Start-up Power Level
+    description: This power level must be reached by the photovoltaic system before the Wattpilot starts charging the car with the minimum current.
     jsonType: integer
     example: 1400
+    rw: R/W
+    homeAssistant:
+      component: number
+      config:
+        device_class: power
+        unit_of_measurement: W
+        min: 1400
+        max: 11000
+        step: 100
   - key: fte
     jsonType: integer
     example: 50000
@@ -742,13 +1092,16 @@ properties:
     category: Constant
     description: firmware from CarControl
   - key: fwv
+    title: Firmware Version
+    description: Version of the Wattpilot firmware
     alias: firmwareVersion
     jsonType: string
     example: 36.3
     rw: R
     type: string
     category: Constant
-    description: FW_VERSION
+    homeAssistant:
+      component: sensor
   - key: fzf
     jsonType: boolean
     example: false
@@ -757,7 +1110,7 @@ properties:
     example: false
   - key: gmk
     jsonType: string
-    example: ''
+    example: ""
   - key: host
     alias: hostname
     jsonType: string
@@ -787,7 +1140,8 @@ properties:
     rw: R/W
     type: bool
     category: Config
-    description: httpStaReachable, defines if the local webserver should be reachable
+    description:
+      httpStaReachable, defines if the local webserver should be reachable
       from the customers WiFi
   - key: ido
     jsonType: unknown
@@ -873,19 +1227,33 @@ properties:
     example: 5369660
   - key: lck
     alias: effectiveLockSetting
+    title: Effective Lock Setting
     jsonType: integer
     example: 0
     rw: R
     type: uint8
     category: Status
-    description: Effective lock setting, as sent to Charge Ctrl (Normal=0, AutoUnlock=1,
+    description:
+      Effective lock setting, as sent to Charge Ctrl (Normal=0, AutoUnlock=1,
       AlwaysLock=2, ForceUnlock=3)
+    valueMap:
+      "0": Normal
+      "1": AutoUnlock
+      "2": AlwaysLock
+      "3": ForceUnlock
+    homeAssistant:
   - key: led
     alias: ledInfo
     jsonType: object
-    example: id=16, name='Ready', norwayOverlay=True, modeOverlay=True, subtype='renderCmds',
-      ranges=[namespace(from=0, to=5, colors=['#0000FF']), namespace(from=6, to=31,
-      colors=['#000000'])]
+    example:
+      {
+        "id": 5,
+        "name": "Finished",
+        "norwayOverlay": true,
+        "modeOverlay": true,
+        "subtype": "renderCmds",
+        "ranges": [{ "from": 0, "to": 31, "colors": ["#00FF00"] }],
+      }
     rw: R
     type: object
     category: Status
@@ -906,12 +1274,19 @@ properties:
     example: 2
   - key: lmo
     alias: logicMode
+    title: Logic Mode
     jsonType: integer
     example: 3
     rw: R/W
     type: uint8
     category: Config
     description: logic mode (Default=3, Awattar=4, AutomaticStop=5)
+    valueMap:
+      "3": Default
+      "4": Awattar
+      "5": AutomaticStop
+    homeAssistant:
+      component: select
   - key: lmsc
     alias: lastModelStatusChange
     jsonType: integer
@@ -955,7 +1330,7 @@ properties:
   - key: log
     alias: loadGroupId
     jsonType: string
-    example: ''
+    example: ""
     rw: R/W
     type: string
     category: Config
@@ -997,12 +1372,18 @@ properties:
     description: load balancing total amp
   - key: loty
     alias: loadBalancingType
+    title: Load Balancing Type
     jsonType: integer
     example: 0
     rw: R/W
     type: uint8
     category: Config
     description: load balancing type (Static=0, Dynamic=1)
+    valueMap:
+      "0": Static
+      "1": Dynamic
+    homeAssistant:
+      component: select
   - key: lps
     jsonType: integer
     example: 63
@@ -1099,12 +1480,14 @@ properties:
     description: Module hardware pcb version (0, 1, ...)
   - key: modelStatus
     alias: modelStatus
+    title: Model Status
     jsonType: integer
     example: 15
     rw: R
     type: uint8
     category: Status
-    description: Reason why we allow charging or not right now (NotChargingBecauseNoChargeCtrlData=0,
+    description:
+      Reason why we allow charging or not right now (NotChargingBecauseNoChargeCtrlData=0,
       NotChargingBecauseOvertemperature=1, NotChargingBecauseAccessControlWait=2,
       ChargingBecauseForceStateOn=3, NotChargingBecauseForceStateOff=4, NotChargingBecauseScheduler=5,
       NotChargingBecauseEnergyLimit=6, ChargingBecauseAwattarPriceLow=7, ChargingBecauseAutomaticStopTestLadung=8,
@@ -1114,6 +1497,32 @@ properties:
       NotChargingBecauseFallbackAwattar=17, NotChargingBecauseFallbackAutomaticStop=18,
       ChargingBecauseCarCompatibilityKeepAlive=19, ChargingBecauseChargePauseNotAllowed=20,
       NotChargingBecauseSimulateUnplugging=22, NotChargingBecausePhaseSwitch=23, NotChargingBecauseMinPauseDuration=24)
+    valueMap:
+      "0": NotChargingBecauseNoChargeCtrlData
+      "1": NotChargingBecauseOvertemperature
+      "2": NotChargingBecauseAccessControlWait
+      "3": ChargingBecauseForceStateOn
+      "4": NotChargingBecauseForceStateOff
+      "5": NotChargingBecauseScheduler
+      "6": NotChargingBecauseEnergyLimit
+      "7": ChargingBecauseAwattarPriceLow
+      "8": ChargingBecauseAutomaticStopTestLadung
+      "9": ChargingBecauseAutomaticStopNotEnoughTime
+      "10": ChargingBecauseAutomaticStop
+      "11": ChargingBecauseAutomaticStopNoClock
+      "12": ChargingBecausePvSurplus
+      "13": ChargingBecauseFallbackGoEDefault
+      "14": ChargingBecauseFallbackGoEScheduler
+      "15": ChargingBecauseFallbackDefault
+      "16": NotChargingBecauseFallbackGoEAwattar
+      "17": NotChargingBecauseFallbackAwattar
+      "18": NotChargingBecauseFallbackAutomaticStop
+      "19": ChargingBecauseCarCompatibilityKeepAlive
+      "20": ChargingBecauseChargePauseNotAllowed
+      "22": NotChargingBecauseSimulateUnplugging
+      "23": NotChargingBecausePhaseSwitch
+      "24": NotChargingBecauseMinPauseDuration
+    homeAssistant:
   - key: mptwt
     alias: minPhaseToggleWaitTime
     jsonType: integer
@@ -1159,18 +1568,157 @@ properties:
     description: norway_mode / ground check enabled when norway mode is disabled (inverted)
   - key: nrg
     alias: energy
+    title: Charging Energy
     jsonType: array
     example: [235, 234, 234, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     itemType: integer
     rw: R
     type: array
     category: Status
-    description: energy array, U (L1, L2, L3, N), I (L1, L2, L3), P (L1, L2, L3, N,
+    description:
+      energy array, U (L1, L2, L3, N), I (L1, L2, L3), P (L1, L2, L3, N,
       Total), pf (L1, L2, L3, N)
+    homeAssistant:
+      config:
+        enabled_by_default: false
+    childProps:
+      - key: nrg_ul1
+        title: Charging Voltage L1
+        valueRef: 0
+        homeAssistant:
+          config:
+            device_class: voltage
+            unit_of_measurement: V
+            enabled_by_default: false
+      - key: nrg_ul2
+        title: Charging Voltage L2
+        valueRef: 1
+        homeAssistant:
+          config:
+            device_class: voltage
+            unit_of_measurement: V
+            enabled_by_default: false
+      - key: nrg_ul3
+        title: Charging Voltage L3
+        valueRef: 2
+        homeAssistant:
+          config:
+            device_class: voltage
+            unit_of_measurement: V
+            enabled_by_default: false
+      - key: nrg_un
+        title: Charging Voltage N
+        valueRef: 3
+        homeAssistant:
+          config:
+            device_class: voltage
+            unit_of_measurement: V
+            enabled_by_default: false
+      - key: nrg_il1
+        title: Charging Current L1
+        valueRef: 4
+        homeAssistant:
+          config:
+            device_class: current
+            unit_of_measurement: A
+            enabled_by_default: false
+      - key: nrg_il2
+        title: Charging Current L2
+        valueRef: 5
+        homeAssistant:
+          config:
+            device_class: current
+            unit_of_measurement: A
+            enabled_by_default: false
+      - key: nrg_il3
+        title: Charging Current L3
+        valueRef: 6
+        homeAssistant:
+          config:
+            device_class: current
+            unit_of_measurement: A
+            enabled_by_default: false
+      - key: nrg_pl1
+        title: Charging Power L1
+        valueRef: 7
+        homeAssistant:
+          config:
+            device_class: power
+            unit_of_measurement: W
+            enabled_by_default: false
+      - key: nrg_pl2
+        title: Charging Power L2
+        valueRef: 8
+        homeAssistant:
+          config:
+            device_class: power
+            unit_of_measurement: W
+            enabled_by_default: false
+      - key: nrg_pl3
+        title: Charging Power L3
+        valueRef: 9
+        homeAssistant:
+          config:
+            device_class: power
+            unit_of_measurement: W
+            enabled_by_default: false
+      - key: nrg_pn
+        title: Charging Power N
+        valueRef: 10
+        homeAssistant:
+          config:
+            device_class: power
+            unit_of_measurement: W
+            enabled_by_default: false
+      - key: nrg_ptotal
+        title: Charging Power Total
+        valueRef: 11
+        homeAssistant:
+          config:
+            device_class: power
+            unit_of_measurement: W
+      - key: nrg_pfl1
+        title: Charging Power Factor L1
+        valueRef: 12
+        homeAssistant:
+          config:
+            device_class: power_factor
+            unit_of_measurement: "%"
+            enabled_by_default: false
+      - key: nrg_pfl2
+        title: Charging Power Factor L2
+        valueRef: 13
+        homeAssistant:
+          config:
+            device_class: power_factor
+            unit_of_measurement: "%"
+            enabled_by_default: false
+      - key: nrg_pfl3
+        title: Charging Power Factor L3
+        valueRef: 14
+        homeAssistant:
+          config:
+            device_class: power_factor
+            unit_of_measurement: "%"
+            enabled_by_default: false
+      - key: nrg_pfn
+        title: Charging Power Factor N
+        valueRef: 15
+        homeAssistant:
+          config:
+            device_class: power_factor
+            unit_of_measurement: "%"
+            enabled_by_default: false
   - key: nvs
     jsonType: object
-    example: used_entries=115, free_entries=7949, total_entries=8064, namespace_count=2,
-      nvs_handle_user=47
+    example:
+      {
+        "used_entries": 120,
+        "free_entries": 7944,
+        "total_entries": 8064,
+        "namespace_count": 2,
+        "nvs_handle_user": 52,
+      }
   - key: obm
     jsonType: unknown
     example: None
@@ -1196,7 +1744,7 @@ properties:
   - key: ocm
     alias: otaCloudMessage
     jsonType: string
-    example: ''
+    example: ""
     rw: R
     type: string
     category: Status
@@ -1235,16 +1783,23 @@ properties:
     example: ws://echo.websocket.org/
   - key: ocs
     alias: otaCloudStatus
+    title: OTA Cloud Status
     jsonType: integer
     example: 0
     rw: R
     type: uint8
     category: Status
     description: ota from cloud status (Idle=0, Updating=1, Failed=2, Succeeded=3)
+    valueMap:
+      "0": Idle
+      "1": Updating
+      "2": Failed
+      "3": Succeeded
+    homeAssistant:
   - key: ocu
     alias: otaCloudBranches
     jsonType: array
-    example: ['__default']
+    example: ["__default"]
     itemType: string
     rw: R
     type: array
@@ -1277,7 +1832,15 @@ properties:
   - key: otap
     alias: otaPartition
     jsonType: object
-    example: type=0, subtype=16, address=1441792, size=4194304, label='app_0', encrypted=True
+    example:
+      {
+        "type": 0,
+        "subtype": 16,
+        "address": 1441792,
+        "size": 4194304,
+        "label": "app_0",
+        "encrypted": true,
+      }
     rw: R
     type: optional<object>
     category: Constant
@@ -1286,7 +1849,25 @@ properties:
     alias: partitionTable
     jsonType: array
     itemType: object
-    example: type=1, subtype=2, address=65536, size=262144, label='nvs', encrypted=False
+    example:
+      [
+        {
+          "type": 1,
+          "subtype": 2,
+          "address": 65536,
+          "size": 262144,
+          "label": "nvs",
+          "encrypted": false,
+        },
+        {
+          "type": 1,
+          "subtype": 1,
+          "address": 327680,
+          "size": 4096,
+          "label": "phy_init",
+          "encrypted": false,
+        },
+      ]
     rw: R
     type: array
     category: Constant
@@ -1294,7 +1875,7 @@ properties:
   - key: pha
     alias: phases
     jsonType: array
-    example: '[false, false, false, true, true, true]'
+    example: "[false, false, false, true, true, true]"
     itemType: boolean
     rw: R
     type: optional<array>
@@ -1329,35 +1910,79 @@ properties:
     category: Constant
     description: partition table offset in flash
   - key: pvopt_averagePAkku
+    title: Avg Akku Power
     jsonType: float
     example: -5213.455
+    rw: R
+    homeAssistant:
+      config:
+        device_class: power
+        unit_of_measurement: W
   - key: pvopt_averagePGrid
+    title: Avg Grid Power
     jsonType: float
     example: 1.923335
+    rw: R
+    homeAssistant:
+      config:
+        device_class: power
+        unit_of_measurement: W
   - key: pvopt_averagePOhmpilot
+    title: Avg Ohmpilot Power
     jsonType: integer
     example: 0
+    rw: R
+    homeAssistant:
+      config:
+        device_class: power
+        unit_of_measurement: W
   - key: pvopt_averagePPv
+    title: Avg PV Power
     jsonType: float
     example: 6008.117
+    rw: R
+    homeAssistant:
+      config:
+        device_class: power
+        unit_of_measurement: W
   - key: pvopt_deltaA
+    title: Delta Current
     jsonType: integer
     example: 0
+    rw: R
+    homeAssistant:
+      config:
+        device_class: current
+        unit_of_measurement: A
   - key: pvopt_deltaP
+    title: Delta Power
     jsonType: float
     example: -1256.149
+    rw: R
+    homeAssistant:
+      config:
+        device_class: power
+        unit_of_measurement: W
   - key: pvopt_specialCase
     jsonType: integer
     example: 0
+    rw: R
   - key: pwm
     alias: phaseWishMode
+    title: Phase Wish Mode
     jsonType: integer
     example: 0
     rw: R
     type: uint8
     category: Status
-    description: phase wish mode for debugging / only for pv optimizing / used for
+    description:
+      phase wish mode for debugging / only for pv optimizing / used for
       timers later (Force_3=0, Wish_1=1, Wish_3=2)
+    valueMap:
+      "0": Force_3
+      "1": Wish_1
+      "2": Wish_3
+    homeAssistant:
   - key: qsc
     alias: queueSizeCloud
     jsonType: integer
@@ -1376,12 +2001,13 @@ properties:
     description: queue size webserver/websocket
   - key: rbc
     alias: rebootCounter
+    title: Reboot Counter
     jsonType: integer
     example: 32
     rw: R
     type: uint32
     category: Status
-    description: reboot_counter
+    description: Number of device reboots
   - key: rbt
     alias: timeSinceBoot
     jsonType: integer
@@ -1429,24 +2055,44 @@ properties:
     example: false
   - key: rr
     alias: espResetReason
+    title: ESP Reset Reason
     jsonType: integer
     example: 4
     rw: R
     type: uint8
     category: Status
-    description: esp_reset_reason (UNKNOWN=0, POWERON=1, EXT=2, SW=3, PANIC=4, INT_WDT=5,
+    description:
+      esp_reset_reason (UNKNOWN=0, POWERON=1, EXT=2, SW=3, PANIC=4, INT_WDT=5,
       TASK_WDT=6, WDT=7, DEEPSLEEP=8, BROWNOUT=9, SDIO=10)
+    valueMap:
+      "0": UNKNOWN
+      "1": POWERON
+      "2": EXT
+      "3": SW
+      "4": PANIC
+      "5": INT_WDT
+      "6": TASK_WDT
+      "7": WDT
+      "8": DEEPSLEEP
+      "9": BROWNOUT
+      "10": SDIO
   - key: rrca
     jsonType: integer
     example: 2
   - key: rssi
     alias: wifiRssi
+    title: WIFI Signal Strength
     jsonType: integer
     example: -66
     rw: R
     type: optional<int8>
     category: Status
     description: RSSI signal strength
+    homeAssistant:
+      component: sensor
+      config:
+        device_class: signal_strength
+        unit_of_measurement: dBm
   - key: sau
     jsonType: boolean
     example: false
@@ -1470,55 +2116,140 @@ properties:
     alias: wifiScanResult
     jsonType: array
     itemType: object
-    example: ssid='<SOME_SSID>', encryptionType=3, rssi=-66, channel=6, bssid='<SOME_BSSID>',
-      f=[4, 4, True, True, True, False, False, False, False, 'DE']
+    example:
+      [
+        {
+          "ssid": "<SOME_SSID>",
+          "encryptionType": 3,
+          "rssi": -65,
+          "channel": 6,
+          "bssid": "<SOME_BSSID>",
+          "f": [4, 4, true, true, true, false, false, false, false, "DE"],
+        },
+        {
+          "ssid": "<SOME_SSID>",
+          "encryptionType": 3,
+          "rssi": -65,
+          "channel": 6,
+          "bssid": "<SOME_BSSID>",
+          "f": [4, 4, true, true, true, false, false, false, false, "DE"],
+        },
+      ]
     title: Scanned WIFI Hotspots
-    description: 'wifi scan result (encryptionType: OPEN=0, WEP=1, WPA_PSK=2, WPA2_PSK=3,
-      WPA_WPA2_PSK=4, WPA2_ENTERPRISE=5, WPA3_PSK=6, WPA2_WPA3_PSK=7)'
+    description:
+      "wifi scan result (encryptionType: OPEN=0, WEP=1, WPA_PSK=2, WPA2_PSK=3,
+      WPA_WPA2_PSK=4, WPA2_ENTERPRISE=5, WPA3_PSK=6, WPA2_WPA3_PSK=7)"
     rw: R
     type: array
     category: Status
   - key: scas
     alias: wifiScanStatus
+    title: WIFI Scan Status
     jsonType: integer
     example: 2
     rw: R
     type: uint8
     category: Status
     description: wifi scan status (None=0, Scanning=1, Finished=2, Failed=3)
+    valueMap:
+      "0": None
+      "1": Scanning
+      "2": Finished
+      "3": Failed
+    homeAssistant:
   - key: sch_satur
     alias: schedulerSaturday
     jsonType: object
-    example: control=0, ranges=[namespace(begin=namespace(hour=0, minute=0), end=namespace(hour=0,
-      minute=0)), namespace(begin=namespace(hour=0, minute=0), end=namespace(hour=0,
-      minute=0))]
+    example:
+      {
+        "control": 0,
+        "ranges":
+          [
+            {
+              "begin": { "hour": 0, "minute": 0 },
+              "end": { "hour": 0, "minute": 0 },
+            },
+            {
+              "begin": { "hour": 0, "minute": 0 },
+              "end": { "hour": 0, "minute": 0 },
+            },
+          ],
+      }
     title: Charging Schedule Saturday
-    description: 'scheduler_saturday, control enum values: Disabled=0, Inside=1, Outside=2'
+    description: "scheduler_saturday, control enum values: Disabled=0, Inside=1, Outside=2"
     rw: R/W
     type: object
     category: Config
+    childProps:
+      - key: sch_satur_control
+        valueRef: control
+        jsonType: integer
+        valueMap:
+          "0": Disabled
+          "1": Inside
+          "2": Outside
   - key: sch_sund
     alias: schedulerSunday
     jsonType: object
-    example: namespace(control=0, ranges=[namespace(begin=namespace(hour=0, minute=0),
-      end=namespace(hour=0, minute=0)), namespace(begin=namespace(hour=0, minute=0),
-      end=namespace(hour=0, minute=0))]
+    example:
+      {
+        "control": 0,
+        "ranges":
+          [
+            {
+              "begin": { "hour": 0, "minute": 0 },
+              "end": { "hour": 0, "minute": 0 },
+            },
+            {
+              "begin": { "hour": 0, "minute": 0 },
+              "end": { "hour": 0, "minute": 0 },
+            },
+          ],
+      }
     title: Charging Schedule Sunday
-    description: 'scheduler_sunday, control enum values: Disabled=0, Inside=1, Outside=2'
+    description: "scheduler_sunday, control enum values: Disabled=0, Inside=1, Outside=2"
     rw: R/W
     type: object
     category: Config
+    childProps:
+      - key: sch_sund_control
+        valueRef: control
+        jsonType: integer
+        valueMap:
+          "0": Disabled
+          "1": Inside
+          "2": Outside
   - key: sch_week
     alias: schedulerWeekday
     jsonType: object
-    example: control=0, ranges=[namespace(begin=namespace(hour=0, minute=0), end=namespace(hour=0,
-      minute=0)), namespace(begin=namespace(hour=0, minute=0), end=namespace(hour=0,
-      minute=0))]
+    example:
+      {
+        "control": 0,
+        "ranges":
+          [
+            {
+              "begin": { "hour": 0, "minute": 0 },
+              "end": { "hour": 0, "minute": 0 },
+            },
+            {
+              "begin": { "hour": 0, "minute": 0 },
+              "end": { "hour": 0, "minute": 0 },
+            },
+          ],
+      }
     title: Charging Schedule Weekday
-    description: 'scheduler_weekday, control enum values: Disabled=0, Inside=1, Outside=2'
+    description: "scheduler_weekday, control enum values: Disabled=0, Inside=1, Outside=2"
     rw: R/W
     type: object
     category: Config
+    childProps:
+      - key: sch_week_control
+        valueRef: control
+        jsonType: integer
+        valueMap:
+          "0": Disabled
+          "1": Inside
+          "2": Outside
   - key: sdca
     jsonType: integer
     example: 2
@@ -1541,12 +2272,15 @@ properties:
     description: threePhaseSwitchLevel
   - key: sse
     alias: serialNumber
+    title: Serial Number
     jsonType: integer
     example: <some_serialnr>
     rw: R
     type: string
     category: Constant
     description: serial number
+    homeAssistant:
+      component: sensor
   - key: stao
     jsonType: unknown
     example: None
@@ -1574,14 +2308,22 @@ properties:
     example: false
   - key: tds
     alias: timezoneDaylightSavingMode
+    title: Timezone Daylight Saving Mode
     jsonType: integer
     example: 1
     rw: R/W
     type: uint8
     category: Config
     description: timezone daylight saving mode, None=0, EuropeanSummerTime=1, UsDaylightTime=2
+    valueMap:
+      "0": None
+      "1": EuropeanSummerTime
+      "2": UsDaylightTime
+    homeAssistant:
+      component: select
   - key: tma
-    alias: temperautreSensors
+    alias: temperatureSensors
+    title: Temperature Sensors
     jsonType: array
     example: [11, 16.75]
     itemType: float
@@ -1589,6 +2331,26 @@ properties:
     type: array
     category: Status
     description: temperature sensors
+    homeAssistant:
+      config:
+        enabled_by_default: false
+    childProps:
+      - key: tma_1
+        title: Temperature Sensor 1
+        valueRef: 0
+        jsonType: float
+        homeAssistant:
+          config:
+            device_class: temperature
+            unit_of_measurement: °C
+      - key: tma_2
+        title: Temperature Sensor 2
+        valueRef: 1
+        jsonType: float
+        homeAssistant:
+          config:
+            device_class: temperature
+            unit_of_measurement: °C
   - key: tof
     alias: timezoneOffset
     jsonType: integer
@@ -1610,10 +2372,30 @@ properties:
     description: 30 seconds total power average (used to get better next-trip predictions)
   - key: tpck
     jsonType: array
-    example: "['chargectrl', 'i2c', 'led', 'wifi', 'webserver', 'mdns', 'time', 'cloud',\
-      \ 'rfid', 'temperature', 'status', 'froniusinverter', 'button', 'delta_http',\
-      \ 'delta_cloud', 'ota_cloud', 'cmdhandler', 'loadbalancing', 'ocpp', 'remotereq',\
-      \ 'cloud_send']"
+    example:
+      [
+        "chargectrl",
+        "i2c",
+        "led",
+        "wifi",
+        "webserver",
+        "mdns",
+        "time",
+        "cloud",
+        "rfid",
+        "temperature",
+        "status",
+        "froniusinverter",
+        "button",
+        "delta_http",
+        "delta_cloud",
+        "ota_cloud",
+        "cmdhandler",
+        "loadbalancing",
+        "ocpp",
+        "remotereq",
+        "cloud_send",
+      ]
     itemType: string
   - key: tpcm
     jsonType: array
@@ -1626,8 +2408,9 @@ properties:
     rw: R
     type: optional<uint8>
     category: Status
-    description: 'transaction, null when no transaction, 0 when without card, otherwise
-      cardIndex + 1 (1: 0. card, 2: 1. card, ...)'
+    description:
+      "transaction, null when no transaction, 0 when without card, otherwise
+      cardIndex + 1 (1: 0. card, 2: 1. card, ...)"
   - key: ts
     alias: timeServer
     jsonType: string
@@ -1644,14 +2427,20 @@ properties:
     type: bool
     category: Config
     description: time server enabled (NTP)
+    homeAssistant:
+      component: switch
   - key: tsom
     alias: timeServerOperatingMode
+    title: Time Server Operating Mode
     jsonType: integer
     example: 0
     rw: R
     type: uint8
     category: Status
     description: time server operating mode (POLL=0, LISTENONLY=1)
+    valueMap:
+      "0": POLL
+      "1": LISTENONLY
   - key: tssi
     alias: timeServerSyncInterval
     jsonType: integer
@@ -1662,20 +2451,29 @@ properties:
     description: time server sync interval (in ms, 15s minimum)
   - key: tssm
     alias: timeServerSyncMode
+    title: Time Server Sync Mode
     jsonType: integer
     example: 0
     rw: R
     type: uint8
     category: Config
     description: time server sync mode (IMMED=0, SMOOTH=1)
+    valueMap:
+      "0": IMMED
+      "1": SMOOTH
   - key: tsss
     alias: timeServerSyncStatus
+    title: Time Server Sync Status
     jsonType: integer
     example: 0
     rw: R
     type: uint8
     category: Config
     description: time server sync status (RESET=0, COMPLETED=1, IN_PROGRESS=2)
+    valueMap:
+      "0": RESET
+      "1": COMPLETED
+      "2": IN_PROGRESS
   - key: typ
     alias: deviceType
     jsonType: string
@@ -1690,7 +2488,8 @@ properties:
   - key: upd
     jsonType: boolean
     example: false
-    note: This property is referenced in the wattpilot module, but does not seem to
+    note:
+      This property is referenced in the wattpilot module, but does not seem to
       be available
   - key: upo
     alias: unlockPowerOutage
@@ -1701,6 +2500,7 @@ properties:
     category: Config
     description: unlock_power_outage
   - key: ust
+    title: Unlock Setting
     jsonType: integer
     example: 0
     alias: cableLock
@@ -1708,6 +2508,12 @@ properties:
     type: uint8
     category: Config
     description: unlock_setting (Normal=0, AutoUnlock=1, AlwaysLock=2)
+    valueMap:
+      "0": Normal
+      "1": AutoUnlock
+      "2": AlwaysLock
+    homeAssistant:
+      component: select
   - key: utc
     jsonType: string
     example: 2022-03-06T10:59:38.181.250
@@ -1716,12 +2522,18 @@ properties:
     category: Status
     description: utc time
   - key: var
+    alias: variant
+    title: Variant
     jsonType: integer
     example: 11
     rw: R
     type: uint8
     category: Constant
-    description: 'variant: max Ampere value of unit (11: 11kW/16A, 22: 22kW/32A)'
+    description: "variant: max Ampere value of unit (11: 11kW/16A, 22: 22kW/32A)"
+    valueMap:
+      "11": 11kW/16A
+      "22": 22kW/32A
+    homeAssistant:
   - key: waap
     jsonType: integer
     example: 3
@@ -1748,6 +2560,8 @@ properties:
     jsonType: integer
     example: 1
   - key: wcb
+    title: Wifi Connected BSSID
+    description: The BSSID of the connected WIFI access point.
     jsonType: string
     example: <some_mac>
   - key: wcch
@@ -1781,60 +2595,116 @@ properties:
     jsonType: unknown
     example: None
   - key: wh
+    alias: energyCounterSinceStart
+    title: Energy Counter Since Start
     jsonType: float
     example: 2133.804
-    alias: energyCounterSinceStart
     rw: R
     type: double
     category: Status
     description: energy in Wh since car connected
+    homeAssistant:
+      component: sensor
+      config:
+        device_class: energy
+        state_class: total
+        unit_of_measurement: Wh
   - key: wifis
     jsonType: array
     itemType: object
-    example: ssid='<SOME_SSID>', key=True, useStaticIp=False, staticIp='0.0.0.0',
-      staticSubnet='0.0.0.0', staticGateway='0.0.0.0', useStaticDns=False, staticDns0='0.0.0.0',
-      staticDns1='0.0.0.0', staticDns2='0.0.0.0'
+    example:
+      [
+        {
+          "ssid": "<SOME_SSID>",
+          "key": true,
+          "useStaticIp": false,
+          "staticIp": "0.0.0.0",
+          "staticSubnet": "0.0.0.0",
+          "staticGateway": "0.0.0.0",
+          "useStaticDns": false,
+          "staticDns0": "0.0.0.0",
+          "staticDns1": "0.0.0.0",
+          "staticDns2": "0.0.0.0",
+        },
+        {
+          "ssid": "",
+          "key": false,
+          "useStaticIp": false,
+          "staticIp": "0.0.0.0",
+          "staticSubnet": "0.0.0.0",
+          "staticGateway": "0.0.0.0",
+          "useStaticDns": false,
+          "staticDns0": "0.0.0.0",
+          "staticDns1": "0.0.0.0",
+          "staticDns2": "0.0.0.0",
+        },
+      ]
     title: Configured WIFI Networks?
     rw: R/W
     type: array
     category: Config
-    description: 'wifi configurations with ssids and keys, if you only want to change
+    description:
+      'wifi configurations with ssids and keys, if you only want to change
       the second entry, send an array with 1 empty and 1 filled wifi config object:
       `[{}, {"ssid":"","key":""}]`'
   - key: wpb
     jsonType: array
     itemType: string
-    example: '<SOME_BSSID>'
+    example: "<SOME_BSSID>"
   - key: wsc
     jsonType: integer
     example: 0
   - key: wsm
     jsonType: string
-    example: ''
+    example: ""
   - key: wsmr
     jsonType: integer
     example: -90
   - key: wsms
+    alias: wifiStateMachineState
+    title: WIFI State Machine State
     jsonType: integer
     example: 3
     rw: R
     type: uint8
     category: Status
     description: WiFi state machine state (None=0, Scanning=1, Connecting=2, Connected=3)
+    valueMap:
+      "0": None
+      "1": Scanning
+      "2": Connecting
+      "3": Connected
+    homeAssistant:
   - key: wss
     jsonType: unknown
     alias: wifiSsid
-    note: This property is referenced in the wattpilot module, but does not seem to
+    note:
+      This property is referenced in the wattpilot module, but does not seem to
       be available
   - key: wst
+    alias: wifiStaStatus
+    title: WIFI STA Status
     jsonType: integer
     example: 3
     rw: R
     type: uint8
     category: Status
-    description: WiFi STA status (IDLE_STATUS=0, NO_SSID_AVAIL=1, SCAN_COMPLETED=2,
+    description:
+      WiFi STA status (IDLE_STATUS=0, NO_SSID_AVAIL=1, SCAN_COMPLETED=2,
       CONNECTED=3, CONNECT_FAILED=4, CONNECTION_LOST=5, DISCONNECTED=6, CONNECTING=8,
       DISCONNECTING=9, NO_SHIELD=10 (for compatibility with WiFi Shield library))
+    valueMap:
+      "0": IDLE_STATUS
+      "1": NO_SSID_AVAIL
+      "2": SCAN_COMPLETED
+      "3": CONNECTED
+      "4": CONNECT_FAILED
+      "5": CONNECTION_LOST
+      "6": DISCONNECTED
+      "8": CONNECTING
+      "9": DISCONNECTING
+      "10": NO_SHIELD
+    homeAssistant:
   - key: zfo
     jsonType: integer
     example: 200
