@@ -1,3 +1,4 @@
+import json
 import yaml
 
 WATTPILOT_API_FILE = "src/wattpilot/ressources/wattpilot.yaml"
@@ -22,6 +23,10 @@ def pv(prop,key,alt=''):
 def ha(prop):
     return ':heavy_check_mark:' if 'homeAssistant' in prop else ':white_large_square:'
 
+# Message and property example formatting:
+def e(d):
+    return f"`{json.dumps(d['example'])}`" if "example" in d else ""
+
 with open(WATTPILOT_API_FILE, 'r') as stream:
     wpapidef = yaml.safe_load(stream)
 
@@ -31,13 +36,13 @@ s += "## WebSocket Message Types\n\n"
 s += "| Key | Title | Description | Example |\n"
 s += "|-----|-------|-------------|---------|\n"
 for msg in wpapidef["messages"]:
-    s += f"| `{msg['key']}` | {msg['title']} | {msg['description']} |  |\n"
+    s += f"| `{msg['key']}` | {msg['title']} | {msg['description']} | {e(msg)} |\n"
 s += "\n"
 
-s += "## Wattpilot Properties\n\n"
+s += "## WebSocket API Properties\n\n"
 s += "| Key/Alias | Title | R/W | JSON/API Type | Category | HA Enabled | Description | Example |\n"
 s += "|-----------|-------|-----|---------------|----------|------------|-------------|---------|\n"
 for p in wpapidef["properties"]:
-    s += f"| {pk(p)} | {pv(p,'title')} | {pv(p,'rw')} | {pt(p)} | {pv(p,'category')} | {ha(p)} | {pv(p,'description')} | {pc(p,'example')} |\n"
+    s += f"| {pk(p)} | {pv(p,'title')} | {pv(p,'rw')} | {pt(p)} | {pv(p,'category')} | {ha(p)} | {pv(p,'description')} | {e(p)} |\n"
 
 print(s, end='')

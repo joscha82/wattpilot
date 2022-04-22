@@ -1,48 +1,169 @@
 # Message property values:
-# - name: Unique message name that is used by the Wattpilot API
+# - key: Unique message key (=type) that is used by the Wattpilot API
 # - title: A short descriptive title of the message
 # - description: A longer description of the message
+# - example: An example message payload
 messages:
   - key: hello
     title: Hello Message
     description: Received upon connection before authentication
+    example:
+      {
+        "type": "hello",
+        "serial": "<some_serial>",
+        "hostname": "Wattpilot_<some_serial>",
+        "friendly_name": "<some_name>",
+        "manufacturer": "fronius",
+        "devicetype": "wattpilot",
+        "version": "36.3",
+        "protocol": 2,
+        "secured": true,
+      }
   - key: authRequired
     title: Auth Required
     description: Received after hello to ask for authentication
-  - key: response
-    title: Update Response Message
-    description: Received after sending an update and contains the result of the update
+    example:
+      {
+        "type": "authRequired",
+        "token1": "<some_token>",
+        "token2": "<some_token>",
+      }
+  - key: auth
+    title: Auth Message
+    description: This message is sent from the client to Wattpilot to perform an authentication.
+    example: { "type": "auth", "token3": "<some_token>", "hash": "<some_hash>" }
   - key: authSuccess
     title: Auth Success
     description: Received after sending a correct authentication message
+    example:
+      { "type": "authSuccess", "token3": "<some_token>", "hash": "<some_hash>" }
   - key: authError
     title: Auth Error
     description:
       Received after sending an incorrect authentication message (e.g.
       wrong password)
+    example:
+      {
+        "type": "authError",
+        "token3": "<some_token>",
+        "hash": "<some_hash>",
+        "message": "Wrong password",
+      }
   - key: fullStatus
     title: Full Status
     description:
       Set of messages received after successful connection. These messages
-      contain all properties of Wattpilot.
+      contain all properties of Wattpilot. `partial:true` means that more `fullStatus` messages will be sent with additional properties.
+    example: { "type": "fullStatus", "partial": true, "status": {
+            "mod": 1,
+            "rfb": 1698,
+            "stao": null,
+            "alw": true,
+            "acu": 6,
+            "acui": 6,
+            "adi": true,
+            "dwo": null,
+            "tpa": 0,
+            # ... many more properties
+          } }
   - key: deltaStatus
     title: Delta Status
     description: Whenever a property changes a Delta Status is sent
+    example:
+      {
+        "type": "deltaStatus",
+        "status":
+          {
+            "rfb": 1699,
+            "utc": "2022-04-22T10:44:08.865.407",
+            "loc": "2022-04-22T12:44:08.866.280 +02:00",
+            "rbt": 1560937433,
+            "nrg": [236, 235, 235, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            "fhz": 49.937,
+            "rcd": 5,
+            "lps": 61,
+            "tpcm":
+              [
+                4,
+                0,
+                3,
+                1,
+                0,
+                0,
+                0,
+                0,
+                45,
+                0,
+                3,
+                0,
+                0,
+                47,
+                44,
+                0,
+                0,
+                0,
+                0,
+                0,
+                12,
+              ],
+          },
+      }
   - key: clearInverters
     title: Clear Inverters
     description: Unknown
+    example: { "type": "clearInverters", "partial": true }
   - key: updateInverter
     title: Update Inverter
     description: Contains information of connected PV inverter / power meter
+    example:
+      {
+        "type": "updateInverter",
+        "partial": false,
+        "id": "<some_id>",
+        "paired": true,
+        "deviceFamily": "DataManager",
+        "label": "<some_name>",
+        "model": "PILOT",
+        "commonName": "pilot-0.5e-1670626369628648631_1599713577",
+        "ip": "<some_ip>",
+        "connected": true,
+        "reachableMdns": true,
+        "reachableUdp": true,
+        "reachableHttp": true,
+        "status": 0,
+        "message": "ok",
+      }
+  - key: securedMsg
+    title: Secured Message
+    description: Is sent by the client to change a property value.
+    example:
+      {
+        "type": "securedMsg",
+        "data": '{"type": "setValue", "requestId": 1, "key": "nmo", "value": true}',
+        "requestId": "1sm",
+        "hmac": "<some_hmac>",
+      }
+  - key: response
+    title: Update Response Message
+    description: Received after sending an update and contains the result of the update
+    example:
+      {
+        "type": "response",
+        "requestId": "1",
+        "success": true,
+        "status": { "nmo": true },
+      }
+    # failed example: {"type":"response","requestId":"1","success":false,"message":"value must be bool"}
 
 # Available property values:
-# - name: Unique name that is used by the Wattpilot API
+# - key: Unique name that is used by the Wattpilot API
+# - alias: A unique alias that can be used as a better descriptive name for a self-descriptive API
 # - jsonType: Type of the property: array|boolean|integer|float|object|unknown
-# - example: Typical example values to help at deriving the meaning of fields.
-# - itemType: Type of an array item in case the type is 'array'
+# - type: The data type as defined in the GO eCharger API (maybe rename to apiType)
+# - itemType: Type of an item in case the jsonType is 'array'
 # - title: A short descriptive title of the property
 # - description: A longer description of the property
-# - alias: A unique alias that can be used as a better descriptive name for a self-descriptive API
+# - example: Typical example values to help at deriving the meaning of fields.
 # - min: Minimum value in case the type is 'integer' or 'float'
 # - max: Maximum value in case the type is 'integer' or 'float'
 # - homeAssistant: Config for Home Assistant
@@ -52,6 +173,7 @@ messages:
 #     - unit_of_measurement: The unit of measurement to be used (see https://developers.home-assistant.io/docs/core/entity/sensor/#available-device-classes)
 #     - state_class: The state class to be used - esp. for energy values (see https://developers.home-assistant.io/docs/core/entity/sensor/#available-state-classes)
 #     - enabled_by_default: Set to 'false' if the property should not be enabled by default (default: true)
+#     - ... additional config properties may be added according to the relevant MQTT integration component
 # There seems to be a large overlap to the properties of the go-eCharger API as documented here:
 # - https://github.com/goecharger/go-eCharger-API-v1/blob/master/go-eCharger%20API%20v1%20EN.md
 # - https://github.com/goecharger/go-eCharger-API-v2/blob/main/apikeys-en.md
