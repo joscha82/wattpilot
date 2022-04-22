@@ -50,7 +50,7 @@ wattpilotshell <wattpilot_ip> <password> "get amp"
 wattpilotshell <wattpilot_ip> <password> "set amp 6"
 ```
 
-## MQTT Support
+## MQTT Bridge Support
 
 It is possible to publish JSON messages received from Wattpilot and/or individual property value changes to an MQTT server.
 The easiest way to start the shell with MQTT support is using these environment variables:
@@ -75,7 +75,7 @@ mosquitto
 mosquitto_sub -t 'wattpilot/#' -v
 ```
 
-## Home Assistant Support
+## Home Assistant MQTT Discovery Support
 
 To enable Home Assistant integration (using MQTT) set `MQTT_ENABLED` and `HA_ENABLED` to `true` and make sure to correctly configure the [MQTT Integration](https://www.home-assistant.io/integrations/mqtt).
 It provides auto-discovery of entities using property configuration from `wattpilot.yaml`.
@@ -100,6 +100,22 @@ MQTT support can be easily tested using mosquitto:
 ```bash
 # Subscribe to homeassisant topics in a separate console:
 mosquitto_sub -t 'homeassistant/#' -v
+```
+
+## Docker Support
+
+The Wattpilot MQTT bridge with Home Assistant MQTT discovery can be run as a docker container.
+Here's how to do that:
+
+```bash
+# Build image:
+docker-compose build
+
+# Create .env file with environment variables:
+vi .env
+
+# Run container:
+docker-compose up -d
 ```
 
 ## Environment Variables

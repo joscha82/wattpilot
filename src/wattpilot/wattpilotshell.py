@@ -6,6 +6,7 @@ import os
 import paho.mqtt.client as mqtt
 import re
 import readline
+import sys
 import wattpilot
 import yaml
 import pkgutil
@@ -220,7 +221,11 @@ def shell_cmd_properties(wp, args):
 
 def shell_cmd_server(wp, args):
     _LOGGER.info("Server started.")
-    Event().wait()
+    try:
+        Event().wait()
+    except KeyboardInterrupt:
+        _LOGGER.info("Shutting down.")
+    return True
 
 
 def shell_cmd_set(wp, args):
@@ -931,4 +936,11 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print('Interrupted')
+        try:
+            sys.exit(0)
+        except SystemExit:
+            os._exit(0)

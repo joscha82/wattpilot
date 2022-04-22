@@ -1,0 +1,20 @@
+version: '3'
+
+services:
+  wattpilot:
+    image: wattpilot:latest
+    build:
+      context: .
+    command: server
+    init: true
+    restart: always
+    environment:
+      - HA_ENABLED=${HA_ENABLED:-true}
+      - MQTT_ENABLED=${MQTT_ENABLED:-true}
+      - MQTT_HOST=${MQTT_HOST:?Missing MQTT host!}
+      - MQTT_PORT=${MQTT_PORT:-1883}
+      - MQTT_PUBLISH_MESSAGES=${MQTT_PUBLISH_MESSAGES:-false}
+      - MQTT_PUBLISH_PROPERTIES=${MQTT_PUBLISH_PROPERTIES:-true}
+      - WATTPILOT_DEBUG_LEVEL=${WATTPILOT_DEBUG_LEVEL:-INFO}
+      - WATTPILOT_HOST=${WATTPILOT_HOST:?Missing wattpilot host!}
+      - WATTPILOT_PASSWORD=${WATTPILOT_PASSWORD:?Missing wattpilot password!}
