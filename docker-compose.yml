@@ -6,7 +6,6 @@ services:
     build:
       context: .
     command: server
-    init: true
     restart: always
     environment:
       - HA_ENABLED=${HA_ENABLED:-true}
