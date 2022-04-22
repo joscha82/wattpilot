@@ -131,7 +131,8 @@ mosquitto_sub -t 'homeassistant/#' -v
 
 ## HELP improving wattpilot.yaml
 
-The MQTT and Home Assistant support heavily depends on the property description in `wattpilot.yaml` which has been compiled from different sources and das not yet contain a full set of information for all relevant properties.
+The MQTT and Home Assistant support heavily depends on the property description in `[src/wattpilot/ressources/wattpilot.yaml](wattpilot.yaml)` which has been compiled from different sources and das not yet contain a full set of information for all relevant properties.
+See [API.md](API.md) for a generated documentation of the data.
 
 If you want to help, please have a look at the properties defined in `wattpilot.yaml` and fill in the missing pieces (e.g. `title`, `description`, `rw`, `jsonType`, `childProps`, `homeAssistant`, `device_class`, `unit_of_measurement`, `enabled_by_default`) to properties you care about.
 The file contains enough documentation and a lot of working examples to get you started.
