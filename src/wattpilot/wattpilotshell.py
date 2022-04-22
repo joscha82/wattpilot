@@ -1,5 +1,4 @@
 import argparse
-from ast import arg
 import json
 import logging
 import math
@@ -11,9 +10,12 @@ import wattpilot
 import yaml
 import pkgutil
 
+from ast import arg
 from enum import Enum
 from time import sleep
+from threading import Event
 from types import SimpleNamespace
+from typing import Any, Callable, List
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -140,6 +142,10 @@ def shell_watched_message_received(wp, wsapp, msg, msg_json):
         _LOGGER.info(f"Message of type {msg.type} received: {msg}")
 
 
+def shell_cmd_exit(wp, args):
+    return True
+
+
 def shell_cmd_get(wp, args):
     global wp_propdef
     if len(args) != 1:
@@ -172,6 +178,17 @@ def shell_cmd_ha(wp, args):
         _LOGGER.error(f"Unsupported argument: {args[0]}")
 
 
+def shell_cmd_help(wp, args):
+    print("Wattpilot Shell Commands:")
+    for cmd_desc in list(ShellCommand):
+        c = cmd_desc.value
+        print(f"  {c.help()}")
+
+
+def shell_cmd_info(wp, args):
+    print(wp)
+
+
 def shell_cmd_mqtt(wp, args):
     global mqtt_client
     global MQTT_ENABLED
@@ -192,6 +209,20 @@ def shell_cmd_mqtt(wp, args):
         _LOGGER.error(f"Unsupported argument: {args[0]}")
 
 
+def shell_cmd_properties(wp, args):
+    global wpcfg
+    print(f"Properties:")
+    props = shell_get_props_matching_regex(wp, args)
+    for pd, value in sorted(props.items()):
+        shell_print_prop_info(wpcfg["properties"], pd, value)
+    print()
+
+
+def shell_cmd_server(wp, args):
+    _LOGGER.info("Server started.")
+    Event().wait()
+
+
 def shell_cmd_set(wp, args):
     global wp_propdef
     if len(args) != 2:
@@ -209,6 +240,24 @@ def shell_cmd_set(wp, args):
             v = str(args[1])
         wp.send_update(args[0], mqtt_get_decoded_property(
             wp_propdef[args[0]], v))
+
+
+def shell_cmd_values(wp, args):
+    global wpcfg
+    print(f"List mapped values of available properties:")
+    props = shell_get_props_matching_regex(wp, args)
+    for pd, value in sorted(props.items()):
+        print(
+            f"- {pd}: {mqtt_get_encoded_property(wpcfg['properties'][pd],value)}")
+    print()
+
+
+def shell_cmd_values_raw(wp, args):
+    print(f"List raw values of available properties:")
+    props = shell_get_props_matching_regex(wp, args)
+    for pd, value in sorted(props.items()):
+        print(f"- {pd}: {utils_value2json(value)}")
+    print()
 
 
 def shell_watch_message(wp, name):
@@ -286,37 +335,50 @@ def shell_get_props_matching_regex(wp, args):
 
 
 class CmdDesc():
-    def __init__(self, name, args, desc):
+    def __init__(self, name, args, desc, fn: Callable[[wattpilot.Wattpilot, List[str]], bool] = None):
         self.name = name
         self.args = args
         self.desc = desc
+        self.execute = fn
 
     def help(self):
         return f"{self.name}{(' ' + self.args) if self.args else ''}: {self.desc}"
 
 
 class ShellCommand(Enum):
-    EXIT = CmdDesc('exit', '', 'Exit the shell')
-    GET = CmdDesc('get', '<propName>', 'Get a property value')
+    EXIT = CmdDesc('exit', '', 'Exit the shell', shell_cmd_exit)
+    GET = CmdDesc('get', '<propName>', 'Get a property value', shell_cmd_get)
     HA = CmdDesc('ha', '<start|status|stop>',
-                 'Control Home Assistant discovery (+MQTT client)')
-    HELP = CmdDesc('help', '', 'This help message')
-    INFO = CmdDesc('info', '', 'Print device infos')
-    LIST = CmdDesc('list', '[propRegex]', 'List property infos')
-    MQTT = CmdDesc('mqtt', '<start|status|stop>', 'Control MQTT support')
-    SET = CmdDesc('set', '<propName> <value>', 'Set a property value')
+                 'Control Home Assistant discovery (+MQTT client)', shell_cmd_ha)
+    HELP = CmdDesc('help', '', 'This help message', shell_cmd_help)
+    INFO = CmdDesc('info', '', 'Print device infos', shell_cmd_info)
+    MQTT = CmdDesc('mqtt', '<start|status|stop>',
+                   'Control MQTT support', shell_cmd_mqtt)
+    PROPERTIES = CmdDesc(
+        'properties', '[nameRegex]', 'List property definitions and values', shell_cmd_properties)
+    SERVER = CmdDesc(
+        'server', '', 'Start in server mode (infinite wait loop)', shell_cmd_server)
+    SET = CmdDesc('set', '<propName> <value>',
+                  'Set a property value', shell_cmd_set)
     UNWATCH_MESSAGE = CmdDesc(
-        'unwatch-message', '<msgType>', 'Unwatch message of given message type')
+        'unwatch-message', '<msgType>', 'Unwatch message of given message type', shell_cmd_unwatch_message)
     UNWATCH_PROPERTY = CmdDesc(
-        'unwatch-property', '<propName>', 'Unwatch value changes of given property name')
+        'unwatch-property', '<propName>', 'Unwatch value changes of given property name', shell_cmd_unwatch_property)
     VALUES = CmdDesc('values', '[propRegex] [valueRegex]',
-                     'List values of properties (with value mapping enabled)')
+                     'List values of properties (with value mapping enabled)', shell_cmd_values)
     VALUES_RAW = CmdDesc(
-        'values-raw', '', 'List raw values of properties (without value mapping)')
+        'values-raw', '', 'List raw values of properties (without value mapping)', shell_cmd_values_raw)
     WATCH_MESSAGE = CmdDesc('watch-message', '<msgType>',
-                            'Watch message of given message type')
+                            'Watch message of given message type', shell_cmd_watch_message)
     WATCH_PROPERTY = CmdDesc(
-        'watch-property', '<propName>', 'Watch value changes of given property name')
+        'watch-property', '<propName>', 'Watch value changes of given property name', shell_cmd_watch_property)
+
+    @staticmethod
+    def from_name(name: str):
+        for cmd in list(ShellCommand):
+            if cmd.value.name == name:
+                return cmd
+        return None
 
 
 def shell_process_command(wp, wpcfg, cmdline):
@@ -327,7 +389,6 @@ def shell_process_command(wp, wpcfg, cmdline):
     cmd_parser.add_argument("cmd", help="Command")
     cmd_parser.add_argument("args", help="Arguments", nargs='*')
 
-    wp_propdef = wpcfg["properties"]
     exit = False
     cmd_args = cmd_parser.parse_args(args=cmdline.strip().split(' '))
     cmd = cmd_args.cmd.strip()
@@ -335,50 +396,8 @@ def shell_process_command(wp, wpcfg, cmdline):
     if (cmd == ''):
         # Don't do anything
         exit = False
-    elif (cmd == ShellCommand.EXIT.value.name):
-        exit = True
-    elif (cmd == ShellCommand.GET.value.name):
-        shell_cmd_get(wp, args)
-    elif (cmd == ShellCommand.HA.value.name):
-        shell_cmd_ha(wp, args)
-    elif (cmd == ShellCommand.HELP.value.name):
-        print("Wattpilot Shell Commands:")
-        for cmd_desc in list(ShellCommand):
-            c = cmd_desc.value
-            print(f"  {c.help()}")
-    elif (cmd == ShellCommand.INFO.value.name):
-        print(wp)
-    elif (cmd == ShellCommand.LIST.value.name):
-        print(f"List of available properties:")
-        props = shell_get_props_matching_regex(wp, args)
-        for pd, value in sorted(props.items()):
-            shell_print_prop_info(wp_propdef, pd, value)
-        print()
-    elif (cmd == ShellCommand.MQTT.value.name):
-        shell_cmd_mqtt(wp, args)
-    elif (cmd == ShellCommand.SET.value.name):
-        shell_cmd_set(wp, args)
-    elif (cmd == ShellCommand.VALUES_RAW.value.name):
-        print(f"List raw values of available properties:")
-        props = shell_get_props_matching_regex(wp, args)
-        for pd, value in sorted(props.items()):
-            print(f"- {pd}: {utils_value2json(value)}")
-        print()
-    elif (cmd == ShellCommand.VALUES.value.name):
-        print(f"List mapped values of available properties:")
-        props = shell_get_props_matching_regex(wp, args)
-        for pd, value in sorted(props.items()):
-            print(
-                f"- {pd}: {mqtt_get_encoded_property(wp_propdef[pd],value)}")
-        print()
-    elif (cmd == ShellCommand.WATCH_MESSAGE.value.name):
-        shell_cmd_watch_message(wp, args)
-    elif (cmd == ShellCommand.WATCH_PROPERTY.value.name):
-        shell_cmd_watch_property(wp, args)
-    elif (cmd == ShellCommand.UNWATCH_MESSAGE.value.name):
-        shell_cmd_unwatch_message(wp, args)
-    elif (cmd == ShellCommand.UNWATCH_PROPERTY.value.name):
-        shell_cmd_unwatch_property(wp, args)
+    elif ShellCommand.from_name(cmd):
+        exit = ShellCommand.from_name(cmd).value.execute(wp, args)
     else:
         print(f"Unknown command: {cmd}")
     return exit

@@ -27,8 +27,9 @@ Wattpilot Shell Commands:
   ha <start|status|stop>: Control Home Assistant discovery (+MQTT client)
   help: This help message
   info: Print device infos
-  list [propRegex]: List property infos
   mqtt <start|status|stop>: Control MQTT support
+  properties [nameRegex]: List property definitions and values
+  server: Start in server mode (infinite wait loop)
   set <propName> <value>: Set a property value
   unwatch-message <msgType>: Unwatch message of given message type
   unwatch-property <propName>: Unwatch value changes of given property name
