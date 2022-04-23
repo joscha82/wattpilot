@@ -467,6 +467,7 @@ def shell_setup():
     global wp
     # Setup readline
     readline.parse_and_bind("tab: complete")
+    readline.set_completer_delims(' ')
     readline.set_completer(shell_complete)
     # Commandline argument parser:
     parser = argparse.ArgumentParser()
