@@ -1,8 +1,10 @@
 import argparse
+import cmd
 import json
 import logging
 import math
 import os
+from typing_extensions import Self
 import paho.mqtt.client as mqtt
 import re
 import readline
@@ -99,401 +101,377 @@ def wp_initialize(host, password):
 
 #### Shell Functions ####
 
-def shell_print_prop_info(wp_propdef, prop_name, value):
-    pd = wp_propdef[prop_name]
-    _LOGGER.debug(f"Property info: {pd}")
-    title = ""
-    desc = ""
-    alias = ""
-    rw = ""
-    if 'rw' in pd:
-        rw = f", rw:{pd['rw']}"
-    if 'alias' in pd:
-        alias = f", alias:{pd['alias']}"
-    if 'title' in pd:
-        title = pd['title']
-    if 'description' in pd:
-        desc = pd['description']
-    print(f"- {prop_name} ({pd['jsonType']}{rw}{alias}): {title}")
-    print(f"  Raw Value: {utils_value2json(value)}")
-    if "valueMap" in pd:
-        print(f"  Mapped Value: {mqtt_get_encoded_property(pd,value)}")
-    if desc:
-        print(f"  Description: {desc}")
-    if 'itemType' in pd:
-        print(f"  Array item type: {pd['itemType']}")
-    if 'min' in pd:
-        print(f"  Minimum value: {pd['min']}")
-    if 'max' in pd:
-        print(f"  Maximum value: {pd['max']}")
-    if 'example' in pd:
-        print(f"  Example: {utils_value2json(pd['example'])}")
+class WattpilotShell(cmd.Cmd):
+    intro = f"Welcome to the Wattpilot Shell {version('wattpilot')}.   Type help or ? to list commands.\n"
+    prompt = 'wattpilot> '
+    file = None
 
+    def postloop(self) -> None:
+        print()
+        return super().postloop()
 
-def shell_watched_property_changed(name, value):
-    global wp_propdef
-    global shell_watching_properties
-    if name in shell_watching_properties:
-        pd = wp_propdef[name]
-        _LOGGER.info(
-            f"Property {name} changed to {mqtt_get_encoded_property(pd,value)}")
-
-
-def shell_watched_message_received(wp, wsapp, msg, msg_json):
-    global shell_watching_messages
-    if msg.type in shell_watching_messages:
-        _LOGGER.info(f"Message of type {msg.type} received: {msg}")
-
-
-def shell_ensure_connected():
-    if not wp:
-        print('Not connected to wattpilot!')
+    def emptyline(self) -> bool:
         return False
-    return True
 
+    def _complete_list(self, clist, text):
+        return [x for x in clist if x.startswith(text)]
 
-def shell_cmd_connect(cmd, _, args):
-    global WATTPILOT_HOST
-    global WATTPILOT_PASSWORD
-    global wp
-    wp = wp_initialize(WATTPILOT_HOST, WATTPILOT_PASSWORD)
+    def _complete_message(self, text, sender=None):
+        global wpcfg
+        return [md["key"] for md in wpcfg["messages"].values() if (not sender or md["sender"] == sender) and md["key"].startswith(text)]
 
+    def _complete_propname(self, text, rw=False):
+        global wpcfg
+        return [pd["key"] for pd in wpcfg["properties"].values() if (not rw or ("rw" in pd and pd["rw"] == "R/W")) and pd["key"].startswith(text)]
 
-def shell_cmd_exit(cmd, wp, args):
-    return True
+    def _complete_values(self, text, line):
+        global wpcfg
+        token = line.split(' ')
+        if len(token) == 2:
+            return self._complete_propname(text, rw=False) + ['<propRegex>']
+        elif len(token) == 3 and text in wpcfg["properties"]:
+            return ['<value>', '<valueRegex>']
+        return []
 
+    def do_EOF(self, arg: str) -> bool | None:
+        """Exit the shell"""
+        return True
 
-def shell_cmd_get(cmd, wp, args):
-    global wp_propdef
-    if not shell_ensure_connected():
-        return
-    if len(args) != 1:
-        _LOGGER.error(f"Wrong number of arguments: {cmd.synopsis()}")
-    elif args[0] not in wp.allProps:
-        _LOGGER.error(f"Unknown property: {args[0]}")
-    else:
-        pd = wp_propdef[args[0]]
-        print(mqtt_get_encoded_property(pd, wp.allProps[args[0]]))
+    def do_connect(self, arg: str) -> bool | None:
+        """Connect to Wattpilot
+Usage: connect"""
+        global WATTPILOT_HOST
+        global WATTPILOT_PASSWORD
+        global wp
+        wp = wp_initialize(WATTPILOT_HOST, WATTPILOT_PASSWORD)
 
+    def do_exit(self, arg: str) -> bool | None:
+        """Exit the shell
+Usage: exit"""
+        return True
 
-def shell_cmd_ha(cmd, wp, args):
-    global HA_ENABLED
-    global HA_PROPERTIES
-    global mqtt_client
-    if not shell_ensure_connected():
-        return
-    if len(args) != 1:
-        _LOGGER.error(
-            f"Wrong number of arguments: {cmd.synopsis()}")
-        return
-    if args[0] == "start":
-        HA_ENABLED = 'true'
-        mqtt_client = ha_setup(wp)
-    elif args[0] == "stop":
-        ha_stop(mqtt_client)
-        HA_ENABLED = 'false'
-    elif args[0] == "status":
-        print(
-            f"HA discovery is {'enabled' if HA_ENABLED == 'true' else 'disabled'}.")
-    else:
-        _LOGGER.error(f"Unsupported argument: {args[0]}")
-
-
-def shell_cmd_help(cmd, wp, args):
-    print("Wattpilot Shell Commands:")
-    for cmd_desc in list(ShellCommand):
-        c = cmd_desc.value
-        print(f"  {c.help()}")
-
-
-def shell_cmd_info(cmd, wp, args):
-    if not shell_ensure_connected():
-        return
-    print(wp)
-
-
-def shell_cmd_mqtt(cmd, wp, args):
-    global mqtt_client
-    global MQTT_ENABLED
-    if not shell_ensure_connected():
-        return
-    if len(args) != 1:
-        _LOGGER.error(
-            f"Wrong number of arguments: {cmd.synopsis()}")
-        return
-    if args[0] == "start":
-        MQTT_ENABLED = 'true'
-        mqtt_client = mqtt_setup(wp)
-    elif args[0] == "stop":
-        mqtt_stop(mqtt_client)
-        MQTT_ENABLED = 'false'
-    elif args[0] == "status":
-        print(
-            f"MQTT client is {'enabled' if MQTT_ENABLED == 'true' else 'disabled'}.")
-    else:
-        _LOGGER.error(f"Unsupported argument: {args[0]}")
-
-
-def shell_cmd_properties(cmd, wp, args):
-    global wpcfg
-    if not shell_ensure_connected():
-        return
-    print(f"Properties:")
-    props = shell_get_props_matching_regex(wp, args)
-    for pd, value in sorted(props.items()):
-        shell_print_prop_info(wpcfg["properties"], pd, value)
-    print()
-
-
-def shell_cmd_server(cmd, wp, args):
-    if not shell_ensure_connected():
-        return
-    _LOGGER.info("Server started.")
-    try:
-        Event().wait()
-    except KeyboardInterrupt:
-        _LOGGER.info("Shutting down.")
-    return True
-
-
-def shell_cmd_set(cmd, wp, args):
-    global wp_propdef
-    if not shell_ensure_connected():
-        return
-    if len(args) != 2:
-        _LOGGER.error(f"Wrong number of arguments: {cmd.synopsis()}")
-    elif args[0] not in wp.allProps:
-        _LOGGER.error(f"Unknown property: {args[0]}")
-    else:
-        if args[1].lower() in ["false", "true"]:
-            v = json.loads(args[1].lower())
-        elif str(args[1]).isnumeric():
-            v = int(args[1])
-        elif str(args[1]).isdecimal():
-            v = float(args[1])
+    def do_get(self, arg: str) -> bool | None:
+        """Get a property value
+Usage: get <propName>"""
+        global wp
+        global wp_propdef
+        args = arg.split(' ')
+        if not self._ensure_connected():
+            return
+        if len(args) < 1 or arg == '':
+            print(f"ERROR: Wrong number of arguments!")
+        elif args[0] not in wp.allProps:
+            print(f"ERROR: Unknown property: {args[0]}")
         else:
-            v = str(args[1])
-        wp.send_update(args[0], mqtt_get_decoded_property(
-            wp_propdef[args[0]], v))
+            pd = wp_propdef[args[0]]
+            print(mqtt_get_encoded_property(pd, wp.allProps[args[0]]))
 
+    def complete_get(self, text, line, begidx, endidx):
+        return self._complete_propname(text, rw=False)
 
-def shell_cmd_values(cmd, wp, args):
-    global wpcfg
-    if not shell_ensure_connected():
-        return
-    print(f"List values of properties (with value mapping):")
-    props = shell_get_props_matching_regex(wp, args)
-    for pd, value in sorted(props.items()):
-        print(
-            f"- {pd}: {mqtt_get_encoded_property(wpcfg['properties'][pd],value)}")
-    print()
+    def do_ha(self, arg: str) -> bool | None:
+        """Control Home Assistant discovery (+MQTT client)
+Usage: ha <start|status|stop>"""
+        global HA_ENABLED
+        global HA_PROPERTIES
+        global mqtt_client
+        args = arg.split(' ')
+        if not self._ensure_connected():
+            return
+        if len(args) < 1 or arg == '':
+            print(f"ERROR: Wrong number of arguments!")
+            return
+        if args[0] == "start":
+            HA_ENABLED = 'true'
+            mqtt_client = ha_setup(wp)
+        elif args[0] == "stop":
+            ha_stop(mqtt_client)
+            HA_ENABLED = 'false'
+        elif args[0] == "status":
+            print(
+                f"HA discovery is {'enabled' if HA_ENABLED == 'true' else 'disabled'}.")
+        else:
+            print(f"ERROR: Unsupported argument: {args[0]}")
 
+    def complete_ha(self, text, line, begidx, endidx):
+        return self._complete_list(['start', 'status', 'stop'], text)
 
-def shell_cmd_values_raw(cmd, wp, args):
-    if not shell_ensure_connected():
-        return
-    print(f"List raw values of properties (without value mapping):")
-    props = shell_get_props_matching_regex(wp, args)
-    for pd, value in sorted(props.items()):
-        print(f"- {pd}: {utils_value2json(value)}")
-    print()
+    def do_info(self, arg: str) -> bool | None:
+        """Print device infos
+Usage: info"""
+        global wp
+        if not self._ensure_connected():
+            return
+        print(wp)
 
+    def do_mqtt(self, arg: str) -> bool | None:
+        """Control MQTT support
+Usage: mqtt <start|status|stop>"""
+        global MQTT_ENABLED
+        global mqtt_client
+        global wp
+        args = arg.split(' ')
+        if not self._ensure_connected():
+            return
+        if len(args) < 1 or arg == '':
+            print(f"ERROR: Wrong number of arguments!")
+            return
+        if args[0] == "start":
+            MQTT_ENABLED = 'true'
+            mqtt_client = mqtt_setup(wp)
+        elif args[0] == "stop":
+            mqtt_stop(mqtt_client)
+            MQTT_ENABLED = 'false'
+        elif args[0] == "status":
+            print(
+                f"MQTT client is {'enabled' if MQTT_ENABLED == 'true' else 'disabled'}.")
+        else:
+            print(f"ERROR: Unsupported argument: {args[0]}")
 
-def shell_watch_message(wp, name):
-    global shell_watching_messages
-    if len(shell_watching_messages) == 0:
-        wp.register_message_callback(shell_watched_message_received)
-    if name not in shell_watching_messages:
-        shell_watching_messages.append(name)
+    def complete_mqtt(self, text, line, begidx, endidx):
+        return self._complete_list(['start', 'status', 'stop'], text)
 
+    def do_properties(self, arg: str) -> bool | None:
+        """List property definitions and values
+Usage: properties [propRegex]"""
+        global wpcfg
+        if not self._ensure_connected():
+            return
+        print(f"Properties:")
+        props = self._get_props_matching_regex(arg)
+        for pd, value in sorted(props.items()):
+            self._print_prop_info(wpcfg["properties"], pd, value)
+        print()
 
-def shell_watch_property(wp, name):
-    global shell_watching_properties
-    if len(shell_watching_properties) == 0:
-        wp.register_property_callback(shell_watched_property_changed)
-    if name not in shell_watching_properties:
-        shell_watching_properties.append(name)
+    def complete_properties(self, text, line, begidx, endidx):
+        return self._complete_propname(text, rw=False) + ['<propRegex>']
 
+    def do_rawvalues(self, arg: str) -> bool | None:
+        """List raw values of properties (without value mapping)
+Usage: rawvalues [propRegex] [valueRegex]"""
+        global wp
+        if not self._ensure_connected():
+            return
+        print(f"List raw values of properties (without value mapping):")
+        props = self._get_props_matching_regex(arg)
+        for pd, value in sorted(props.items()):
+            print(f"- {pd}: {utils_value2json(value)}")
+        print()
 
-def shell_cmd_watch_message(cmd, wp, args):
-    global wpcfg
-    if not shell_ensure_connected():
-        return
-    if len(args) != 1:
-        _LOGGER.error(f"Wrong number of arguments: {cmd.synopsis()}")
-    elif args[0] not in wpcfg['messages']:
-        _LOGGER.error(f"Unknown message type: {args[0]}")
-    else:
-        shell_watch_message(wp, args[0])
+    def complete_rawvalues(self, text, line, begidx, endidx):
+        return self._complete_values(text, line)
 
+    def do_server(self, arg: str) -> bool | None:
+        """Start in server mode (infinite wait loop)
+Usage: server"""
+        if not self._ensure_connected():
+            return
+        print("Server started.")
+        try:
+            Event().wait()
+        except KeyboardInterrupt:
+            print("Shutting down.")
+        return True
 
-def shell_cmd_watch_property(cmd, wp, args):
-    if not shell_ensure_connected():
-        return
-    if len(args) != 1:
-        _LOGGER.error(f"Wrong number of arguments: {cmd.synopsis()}")
-    elif args[0] not in wp.allProps:
-        _LOGGER.error(f"Unknown property: {args[0]}")
-    else:
-        shell_watch_property(wp, args[0])
+    def do_set(self, arg: str) -> bool | None:
+        """Set a property value
+Usage: set <propName> <value>"""
+        global wp
+        global wp_propdef
+        args = arg.split(' ')
+        if not self._ensure_connected():
+            return
+        if len(args) < 2 or arg == '':
+            print(f"ERROR: Wrong number of arguments!")
+        elif args[0] not in wp.allProps:
+            print(f"ERROR: Unknown property: {args[0]}")
+        else:
+            if args[1].lower() in ["false", "true"]:
+                v = json.loads(args[1].lower())
+            elif str(args[1]).isnumeric():
+                v = int(args[1])
+            elif str(args[1]).isdecimal():
+                v = float(args[1])
+            else:
+                v = str(args[1])
+            wp.send_update(args[0], mqtt_get_decoded_property(
+                wp_propdef[args[0]], v))
 
+    def complete_set(self, text, line, begidx, endidx):
+        global wpcfg
+        token = line.split(' ')
+        if len(token) == 2:
+            return self._complete_propname(text, rw=True)
+        elif len(token) == 3 and token[1] in wpcfg["properties"]:
+            pd = wpcfg["properties"][token[1]]
+            if "jsonType" in pd and pd["jsonType"] == 'boolean':
+                return [v for v in ['false', 'true'] if v.startswith(text)]
+            elif "valueMap" in pd:
+                return [v for v in pd["valueMap"].values() if v.startswith(text)]
+            elif "jsonType" in pd:
+                return [f"<{pd['jsonType']}>"]
+        return []
 
-def shell_cmd_unwatch_message(cmd, wp, args):
-    global shell_watching_messages
-    if not shell_ensure_connected():
-        return
-    if len(args) != 1:
-        _LOGGER.error(f"Wrong number of arguments: {cmd.synopsis()}")
-    elif args[0] not in shell_watching_messages:
-        _LOGGER.warning(f"Message of type '{args[0]}' is not watched")
-    else:
-        shell_watching_messages.remove(args[0])
-        if len(shell_watching_messages) == 0:
-            wp.unregister_message_callback()
+    def do_unwatch(self, arg: str) -> bool | None:
+        """Unwatch a message or property
+Usage: unwatch <message|property> <msgType|propName>"""
+        global shell_watching_messages
+        global wp
+        args = arg.split(' ')
+        if not self._ensure_connected():
+            return
+        if len(args) < 2 or arg == '':
+            print(f"ERROR: Wrong number of arguments!")
+        elif args[0] == 'message' and args[1] not in shell_watching_messages:
+            print(f"ERROR: Message of type '{args[1]}' is not watched")
+        elif args[0] == 'message':
+            shell_watching_messages.remove(args[1])
+            if len(shell_watching_messages) == 0:
+                wp.unregister_message_callback()
+        elif args[0] == 'property' and args[1] not in shell_watching_properties:
+            print(f"ERROR: Property with name '{args[1]}' is not watched")
+        elif args[0] == 'property':
+            shell_watching_properties.remove(args[1])
+            if len(shell_watching_properties) == 0:
+                wp.unregister_property_callback()
+        else:
+            print(f"ERROR: Unknown watch type: {args[0]}")
 
+    def complete_unwatch(self, text, line, begidx, endidx):
+        global shell_watching_messages
+        global shell_watching_properties
+        token = line.split(' ')
+        if len(token) == 2:
+            return self._complete_list(['message', 'property'], text)
+        elif len(token) == 3 and token[1] == 'message':
+            return self._complete_list(shell_watching_messages, text)
+        elif len(token) == 3 and token[1] == 'property':
+            return self._complete_list(shell_watching_properties, text)
+        return []
 
-def shell_cmd_unwatch_property(cmd, wp, args):
-    global shell_watching_properties
-    if not shell_ensure_connected():
-        return
-    if len(args) != 1:
-        _LOGGER.error(f"Wrong number of arguments: {cmd.synopsis()}")
-    elif args[0] not in shell_watching_properties:
-        _LOGGER.warning(f"Property with name '{args[0]}' is not watched")
-    else:
-        shell_watching_properties.remove(args[0])
-        if len(shell_watching_properties) == 0:
-            wp.unregister_property_callback()
+    def do_values(self, arg: str) -> bool | None:
+        """List values of properties (with value mapping enabled)
+Usage: values [propRegex] [valueRegex]"""
+        global wp
+        global wpcfg
+        if not self._ensure_connected():
+            return
+        print(f"List values of properties (with value mapping):")
+        props = self._get_props_matching_regex(arg)
+        for pd, value in sorted(props.items()):
+            print(
+                f"- {pd}: {mqtt_get_encoded_property(wpcfg['properties'][pd],value)}")
+        print()
 
+    def complete_values(self, text, line, begidx, endidx):
+        return self._complete_values(text, line)
 
-def shell_get_props_matching_regex(wp, args):
-    global wp_propdef
-    prop_regex = '.*'
-    if len(args) > 0:
-        prop_regex = args[0]
-    props = {k: v for k, v in wp.allProps.items() if re.match(
-        r'^'+prop_regex+'$', k, flags=re.IGNORECASE)}
-    value_regex = '.*'
-    if len(args) > 1:
-        value_regex = args[1]
-    props = {k: v for k, v in props.items() if re.match(r'^'+value_regex+'$',
-                                                        str(mqtt_get_encoded_property(wp_propdef[k], v)), flags=re.IGNORECASE)}
-    return props
+    def do_watch(self, arg: str) -> bool | None:
+        """Watch message or a property
+Usage: watch <message|property> <msgType|propName>"""
+        global wp
+        global wpcfg
+        args = arg.split(' ')
+        if not self._ensure_connected():
+            return
+        if len(args) < 2 or arg == '':
+            print(f"ERROR: Wrong number of arguments!")
+        elif args[0] == 'message' and args[1] not in wpcfg['messages']:
+            print(f"ERROR: Unknown message type: {args[1]}")
+        elif args[0] == 'message':
+            msg_type = args[1]
+            global shell_watching_messages
+            if len(shell_watching_messages) == 0:
+                wp.register_message_callback(self._watched_message_received)
+            if msg_type not in shell_watching_messages:
+                shell_watching_messages.append(msg_type)
+        elif args[0] == 'property' and args[1] not in wp.allProps:
+            print(f"ERROR: Unknown property: {args[1]}")
+        elif args[0] == 'property':
+            prop_name = args[1]
+            global shell_watching_properties
+            if len(shell_watching_properties) == 0:
+                wp.register_property_callback(self._watched_property_changed)
+            if prop_name not in shell_watching_properties:
+                shell_watching_properties.append(prop_name)
+        else:
+            print(f"ERROR: Unknown watch type: {args[0]}")
 
+    def complete_watch(self, text, line, begidx, endidx):
+        global wpcfg
+        token = line.split(' ')
+        if len(token) == 2:
+            return self._complete_list(['message', 'property'], text)
+        elif len(token) == 3 and token[1] == 'message':
+            return self._complete_message(text, 'server')
+        elif len(token) == 3 and token[1] == 'property':
+            return self._complete_propname(text, rw=False) + ['<propRegex>']
+        return []
 
-class CmdDesc():
-    def __init__(self, name, args, desc, fn: Callable[[wattpilot.Wattpilot, List[str]], bool] = None):
-        self.name = name
-        self.args = args
-        self.desc = desc
-        self.execute = fn
+    def _print_prop_info(self, wp_propdef, prop_name, value):
+        pd = wp_propdef[prop_name]
+        _LOGGER.debug(f"Property info: {pd}")
+        title = ""
+        desc = ""
+        alias = ""
+        rw = ""
+        if 'rw' in pd:
+            rw = f", rw:{pd['rw']}"
+        if 'alias' in pd:
+            alias = f", alias:{pd['alias']}"
+        if 'title' in pd:
+            title = pd['title']
+        if 'description' in pd:
+            desc = pd['description']
+        print(f"- {prop_name} ({pd['jsonType']}{rw}{alias}): {title}")
+        print(f"  Raw Value: {utils_value2json(value)}")
+        if "valueMap" in pd:
+            print(f"  Mapped Value: {mqtt_get_encoded_property(pd,value)}")
+        if desc:
+            print(f"  Description: {desc}")
+        if 'itemType' in pd:
+            print(f"  Array item type: {pd['itemType']}")
+        if 'min' in pd:
+            print(f"  Minimum value: {pd['min']}")
+        if 'max' in pd:
+            print(f"  Maximum value: {pd['max']}")
+        if 'example' in pd:
+            print(f"  Example: {utils_value2json(pd['example'])}")
 
-    def help(self):
-        return f"{self.synopsis()}: {self.desc}"
+    def _watched_property_changed(self, name, value):
+        global wp_propdef
+        global shell_watching_properties
+        if name in shell_watching_properties:
+            pd = wp_propdef[name]
+            _LOGGER.info(
+                f"Property {name} changed to {mqtt_get_encoded_property(pd,value)}")
 
-    def synopsis(self):
-        return f"{self.name}{(' ' + self.args) if self.args else ''}"
+    def _watched_message_received(self, wp, wsapp, msg, msg_json):
+        global shell_watching_messages
+        if msg.type in shell_watching_messages:
+            _LOGGER.info(f"Message of type {msg.type} received: {msg}")
 
+    def _ensure_connected(self):
+        if not wp:
+            print('Not connected to wattpilot!')
+            return False
+        return True
 
-class ShellCommand(Enum):
-    CONNECT = CmdDesc('connect', '', 'Connect to Wattpilot', shell_cmd_connect)
-    EXIT = CmdDesc('exit', '', 'Exit the shell', shell_cmd_exit)
-    GET = CmdDesc('get', '<propName>', 'Get a property value', shell_cmd_get)
-    HA = CmdDesc('ha', '<start|status|stop>',
-                 'Control Home Assistant discovery (+MQTT client)', shell_cmd_ha)
-    HELP = CmdDesc('help', '', 'This help message', shell_cmd_help)
-    INFO = CmdDesc('info', '', 'Print device infos', shell_cmd_info)
-    MQTT = CmdDesc('mqtt', '<start|status|stop>',
-                   'Control MQTT support', shell_cmd_mqtt)
-    PROPERTIES = CmdDesc(
-        'properties', '[nameRegex]', 'List property definitions and values', shell_cmd_properties)
-    SERVER = CmdDesc(
-        'server', '', 'Start in server mode (infinite wait loop)', shell_cmd_server)
-    SET = CmdDesc('set', '<propName> <value>',
-                  'Set a property value', shell_cmd_set)
-    UNWATCH_MESSAGE = CmdDesc(
-        'unwatch-message', '<msgType>', 'Unwatch message of given message type', shell_cmd_unwatch_message)
-    UNWATCH_PROPERTY = CmdDesc(
-        'unwatch-property', '<propName>', 'Unwatch value changes of given property name', shell_cmd_unwatch_property)
-    VALUES = CmdDesc('values', '[propRegex] [valueRegex]',
-                     'List values of properties (with value mapping enabled)', shell_cmd_values)
-    VALUES_RAW = CmdDesc(
-        'values-raw', '', 'List raw values of properties (without value mapping)', shell_cmd_values_raw)
-    WATCH_MESSAGE = CmdDesc('watch-message', '<msgType>',
-                            'Watch message of given message type', shell_cmd_watch_message)
-    WATCH_PROPERTY = CmdDesc(
-        'watch-property', '<propName>', 'Watch value changes of given property name', shell_cmd_watch_property)
-
-    @staticmethod
-    def from_name(name: str):
-        for cmd in list(ShellCommand):
-            if cmd.value.name == name:
-                return cmd
-        return None
-
-
-def shell_process_command(wp, wpcfg, cmdline):
-    """Process a Wattpilot shell command"""
-    #global wp_propdef
-    # Wattpilot shell command parser:
-    cmd_parser = argparse.ArgumentParser()
-    cmd_parser.add_argument("cmd", help="Command")
-    cmd_parser.add_argument("args", help="Arguments", nargs='*')
-
-    exit = False
-    cmd_args = cmd_parser.parse_args(args=cmdline.strip().split(' '))
-    cmd_str = cmd_args.cmd.strip()
-    args = cmd_args.args
-    if (cmd_str == ''):
-        # Don't do anything
-        exit = False
-    elif ShellCommand.from_name(cmd_str):
-        cmd = ShellCommand.from_name(cmd_str).value
-        exit = cmd.execute(cmd, wp, args)
-    else:
-        print(f"Unknown command: {cmd_str}")
-    return exit
-
-
-def shell_complete(text, state):
-    """Simple readline completer"""
-    vocab = [x.value.name for x in list(ShellCommand)]
-    results = [x for x in vocab if x.startswith(text)] + [None]
-    _LOGGER.debug(f"Completion results: {results}")
-    return results[state]
-
-
-def shell_setup():
-    global wp
-    # Setup readline
-    readline.parse_and_bind("tab: complete")
-    readline.set_completer_delims(' ')
-    readline.set_completer(shell_complete)
-    # Commandline argument parser:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("cmdline", help="Optional shell command", nargs="?")
-    args = parser.parse_args()
-    return args
-
-
-def shell_start(wp, wpcfg, args):
-    # Process commands:
-    if args.cmdline:
-        # Process commands passed on the commandline
-        shell_process_command(wp, wpcfg, args.cmdline)
-    else:
-        # Start interactive shell
-        print(f"Wattpilot Shell {version('wattpilot')}")
-        if wp:
-            shell_process_command(wp, wpcfg, "info")
-        exit = False
-        while not exit:
-            try:
-                command = input('> ')
-            except (EOFError, KeyboardInterrupt):
-                command = "exit"
-                print()
-            exit = shell_process_command(wp, wpcfg, command)
+    def _get_props_matching_regex(self, arg):
+        global wp
+        global wp_propdef
+        args = arg.split(' ')
+        prop_regex = '.*'
+        if len(args) > 0 and args[0] != '':
+            prop_regex = args[0]
+        props = {k: v for k, v in wp.allProps.items() if re.match(
+            r'^'+prop_regex+'$', k, flags=re.IGNORECASE)}
+        value_regex = '.*'
+        if len(args) > 1:
+            value_regex = args[1]
+        props = {k: v for k, v in props.items() if re.match(r'^'+value_regex+'$',
+                                                            str(mqtt_get_encoded_property(wp_propdef[k], v)), flags=re.IGNORECASE)}
+        return props
 
 
 #### MQTT Functions ####
@@ -977,7 +955,6 @@ def main():
     shell_watching_messages = []
     mqtt_client = None
 
-    args = shell_setup()
     if WATTPILOT_AUTOCONNECT == 'true':
         wp = wp_initialize(WATTPILOT_HOST, WATTPILOT_PASSWORD)
     else:
@@ -989,7 +966,10 @@ def main():
     elif MQTT_ENABLED == "true" and HA_ENABLED == "true":
         mqtt_client = ha_setup(wp)
 
-    shell_start(wp, wpcfg, args)
+    wpsh = WattpilotShell()
+    if WATTPILOT_AUTOCONNECT == 'true':
+        wpsh.onecmd('info')
+    wpsh.cmdloop()
 
 
 if __name__ == '__main__':

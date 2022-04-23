@@ -6,6 +6,7 @@
 messages:
   - key: hello
     title: Hello Message
+    sender: server
     description: Received upon connection before authentication
     example:
       {
@@ -21,6 +22,7 @@ messages:
       }
   - key: authRequired
     title: Auth Required
+    sender: server
     description: Received after hello to ask for authentication
     example:
       {
@@ -30,15 +32,18 @@ messages:
       }
   - key: auth
     title: Auth Message
+    sender: client
     description: This message is sent from the client to Wattpilot to perform an authentication.
     example: { "type": "auth", "token3": "<some_token>", "hash": "<some_hash>" }
   - key: authSuccess
     title: Auth Success
+    sender: server
     description: Received after sending a correct authentication message
     example:
       { "type": "authSuccess", "token3": "<some_token>", "hash": "<some_hash>" }
   - key: authError
     title: Auth Error
+    sender: server
     description:
       Received after sending an incorrect authentication message (e.g.
       wrong password)
@@ -51,6 +56,7 @@ messages:
       }
   - key: fullStatus
     title: Full Status
+    sender: server
     description:
       Set of messages received after successful connection. These messages
       contain all properties of Wattpilot. `partial:true` means that more `fullStatus` messages will be sent with additional properties.
@@ -68,6 +74,7 @@ messages:
           } }
   - key: deltaStatus
     title: Delta Status
+    sender: server
     description: Whenever a property changes a Delta Status is sent
     example:
       {
@@ -110,10 +117,12 @@ messages:
       }
   - key: clearInverters
     title: Clear Inverters
+    sender: server
     description: Unknown
     example: { "type": "clearInverters", "partial": true }
   - key: updateInverter
     title: Update Inverter
+    sender: server
     description: Contains information of connected PV inverter / power meter
     example:
       {
@@ -135,6 +144,7 @@ messages:
       }
   - key: securedMsg
     title: Secured Message
+    sender: client
     description: Is sent by the client to change a property value.
     example:
       {
@@ -145,6 +155,7 @@ messages:
       }
   - key: response
     title: Update Response Message
+    sender: server
     description: Received after sending an update and contains the result of the update
     example:
       {
@@ -363,7 +374,7 @@ properties:
         jsonType: float
   - key: awp
     alias: awattarMaxPrice
-    jsonType: integer
+    jsonType: float
     example: 3
     rw: R/W
     type: float

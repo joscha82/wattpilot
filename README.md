@@ -20,24 +20,14 @@ Run the interactive shell
 export WATTPILOT_HOST=<wattpilot_ip>
 export WATTPILOT_PASSWORD=<password>
 wattpilotshell
-> help
-Wattpilot Shell Commands:
-  connect: Connect to Wattpilot
-  exit: Exit the shell
-  get <propName>: Get a property value
-  ha <start|status|stop>: Control Home Assistant discovery (+MQTT client)
-  help: This help message
-  info: Print device infos
-  mqtt <start|status|stop>: Control MQTT support
-  properties [nameRegex]: List property definitions and values
-  server: Start in server mode (infinite wait loop)
-  set <propName> <value>: Set a property value
-  unwatch-message <msgType>: Unwatch message of given message type
-  unwatch-property <propName>: Unwatch value changes of given property name
-  values [propRegex] [valueRegex]: List values of properties (with value mapping enabled)
-  values-raw: List raw values of properties (without value mapping)
-  watch-message <msgType>: Watch message of given message type
-  watch-property <propName>: Watch value changes of given property name
+Welcome to the Wattpilot Shell 0.1.   Type help or ? to list commands.
+
+wattpilot> help
+
+Documented commands (type help <topic>):
+========================================
+EOF      exit  ha    info  properties  server  unwatch  watch
+connect  get   help  mqtt  rawvalues   set     values 
 ```
 
 It's also possible to pass a single command to the shell to integrate it into scripts:
