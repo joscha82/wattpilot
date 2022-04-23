@@ -18,3 +18,5 @@
 
 unignore
 work
+.env
+dev.env

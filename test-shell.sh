@@ -2,18 +2,25 @@
 
 # This script helps during development to test certain aspects of the wattpilot shell.
 
-source .env
+if [ -f dev.env ]; then
+    source dev.env
+fi
 
+export PYTHONPATH=src
 
 WPCONFIG_FILE="src/wattpilot/ressources/wattpilot.yaml"
 
 cmd="${1:-ha-default}"
 shift 1
 
+function runShell() {
+    python -m wattpilot.wattpilotshell
+}
+
 function runShellWithProps() {
     PROPS="${1:-}"
     echo "Enabled properties: ${PROPS}"
-    MQTT_ENABLED=true HA_ENABLED=true MQTT_PROPERTIES="${PROPS}" HA_PROPERTIES="${PROPS}" wattpilotshell
+    MQTT_ENABLED=true HA_ENABLED=true MQTT_PROPERTIES="${PROPS}" HA_PROPERTIES="${PROPS}" runShell
 }
 
 function runShellWithAllProps() {
@@ -25,12 +32,12 @@ function runShellWithAllProps() {
 
 case "${cmd}" in
     shell)
-        MQTT_ENABLED=false HA_ENABLED=false wattpilotshell
+        MQTT_ENABLED=false HA_ENABLED=false runShell
     ;;
     save)
         logfile=work/status-$(date +"%Y-%m-%d_%H-%M-%S")-${1:-adhoc}.log
         mkdir -p work
-        WATTPILOT_DEBUG_LEVEL=WARNING MQTT_ENABLED=false HA_ENABLED=false wattpilotshell "list" >${logfile} 2>&1
+        WATTPILOT_DEBUG_LEVEL=WARNING MQTT_ENABLED=false HA_ENABLED=false runShell "list" >${logfile} 2>&1
     ;;
     ha-default)
         runShellWithProps ""
