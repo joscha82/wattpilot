@@ -553,7 +553,7 @@ def mqtt_publish_property(wp, mqtt_client, pd, value, force_publish=False):
     encoded_value = mqtt_get_encoded_property(pd, value)
     _LOGGER.debug(
         f"Publishing property '{prop_name}' with value '{encoded_value}' to MQTT ...")
-    mqtt_client.publish(property_topic, encoded_value)
+    mqtt_client.publish(property_topic, encoded_value, retain=True)
     if MQTT_DECOMPOSE_PROPERTIES and "childProps" in pd:
         _LOGGER.debug(
             f"Splitting child props of property {prop_name} as {pd['jsonType']} for value {value} ...")
