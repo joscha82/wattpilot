@@ -112,10 +112,30 @@ Here's how to do that:
 docker-compose build
 
 # Create .env file with environment variables:
-vi .env
+cat .env
+HA_ENABLED=true
+MQTT_ENABLED=true
+MQTT_HOST=<mqtt_host>
+WATTPILOT_HOST=<wattpilot_ip>
+WATTPILOT_PASSWORD=<my_secret_password>
 
-# Run container:
+# Run container (recommended with MQTT_ENABLED=true and HA_ENABLED=true - e.g. on a Raspberry Pi):
 docker-compose up -d
+```
+
+To diagnose the hundreds of Wattpilot parameters the shell can be started this way (typically recommended with `MQTT_ENABLED=false` and `HA_ENABLED=false` on a local machine, in case a Docker container with MQTT support may be running permanently on e.g. a Raspberry Pi):
+
+```bash
+# Create .env file with environment variables:
+cat .env
+HA_ENABLED=false
+MQTT_ENABLED=false
+MQTT_HOST=<mqtt_host>
+WATTPILOT_HOST=<wattpilot_ip>
+WATTPILOT_PASSWORD=<my_secret_password>
+
+# Run the shell:
+docker-compose run wattpilot shell
 ```
 
 ## Environment Variables
