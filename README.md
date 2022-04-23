@@ -27,7 +27,7 @@ wattpilot> help
 Documented commands (type help <topic>):
 ========================================
 EOF      exit  ha    info  properties  server  unwatch  watch
-connect  get   help  mqtt  rawvalues   set     values 
+connect  get   help  mqtt  rawvalues   set     values
 ```
 
 It's also possible to pass a single command to the shell to integrate it into scripts:
@@ -85,7 +85,6 @@ Pay attention to environment variables starting with `HA_` to fine-tune the Home
 
 The discovery config published to MQTT can be tested using this in addition to the testing steps from MQTT above:
 
-```bash
 MQTT support can be easily tested using mosquitto:
 
 ```bash
@@ -131,31 +130,32 @@ docker-compose run wattpilot shell
 
 ## Environment Variables
 
-| Environment Variable             | Description                                                                                   | Default Value                                        |
-| -------------------------------- | --------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| `HA_ENABLED`             | Enable Home Assistant Discovery                                                               | `false`                                                |
-| `HA_PROPERTIES` | Only discover given properties (leave unset for all properties having `homeAssistant` set in `wattpilot.yaml`) |  |
-| `HA_TOPIC_CONFIG` | Topic pattern for HA discovery config | `homeassistant/{component}/{uniqueId}/config` |
-| `HA_WAIT_INIT_S` | Wait initial number of seconds after starting discovery (in addition to wait time depending on the number of properties). May be increased, if entities in HA are not populated with values. | `5` |
-| `HA_WAIT_PROPS_MS` | Wait milliseconds per property after discovery before publishing property values. May be increased, if entities in HA are not populated with values. | `50` |
-| `MQTT_CLIENT_ID`                   | MQTT client ID                                                                                | `wattpilot2mqtt`                                       |
-| `MQTT_DECOMPOSE_PROPERTIES` | Whether compound properties (e.g. JSON arrays or objects) should be decomposed into separate properties | `true` |
-| `MQTT_ENABLED`                     | Enable MQTT                                                                                   | `false`                                                |
-| `MQTT_HOST`                        | MQTT host to connect to                                                                       |                                                      |
-| `MQTT_PORT`                        | Port of the MQTT host to connect to                                                           | `1883`                                                 |
-| `MQTT_PROPERTIES`            | List of space-separated property names to publish changes for (leave unset for all properties) |                                   |
-| `MQTT_PUBLISH_MESSAGES`            | Publish received Wattpilot messages to MQTT                                                   | `false`                                                 |
-| `MQTT_PUBLISH_PROPERTIES`          | Publish received property values to MQTT                                                      | `true`                                                |
-| `MQTT_TOPIC_BASE`                  | Base topic for MQTT                                                                           | `wattpilot`                                            |
-| `MQTT_TOPIC_MESSAGES`       | Topic pattern to publish Wattpilot messages to                                                | `{baseTopic}/messages/{messageType}`    |
-| `MQTT_TOPIC_PROPERTY_BASE` | Base topic for properties | `{baseTopic}/properties/{propName}` |
-| `MQTT_TOPIC_PROPERTY_SET`  | Topic pattern to listen for property value changes for                                        | `~/set` |
-| `MQTT_TOPIC_PROPERTY_STATE` | Topic pattern to publish property values to                                                   | `~/state`     |
-| `WATTPILOT_CONNECT_TIMEOUT`        | Connect timeout for Wattpilot connection                                                      | `30`                                                   |
-| `WATTPILOT_DEBUG_LEVEL`            | Debug level                                                                                   | `INFO`                                                 |
-| `WATTPILOT_HOST`                   | IP address of the Wattpilot device to connect to                                              |                                                      |
-| `WATTPILOT_INIT_TIMEOUT`    | Wait timeout for property initialization                                                      | `30`                                                   |
-| `WATTPILOT_PASSWORD`               | Password for connecting to the Wattpilot device                                               |                                                      |
+| Environment Variable        | Description                                                                                                                                                                                  | Default Value                                 |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| `HA_ENABLED`                | Enable Home Assistant Discovery                                                                                                                                                              | `false`                                       |
+| `HA_PROPERTIES`             | Only discover given properties (leave unset for all properties having `homeAssistant` set in `wattpilot.yaml`)                                                                               |                                               |
+| `HA_TOPIC_CONFIG`           | Topic pattern for HA discovery config                                                                                                                                                        | `homeassistant/{component}/{uniqueId}/config` |
+| `HA_WAIT_INIT_S`            | Wait initial number of seconds after starting discovery (in addition to wait time depending on the number of properties). May be increased, if entities in HA are not populated with values. | `5`                                           |
+| `HA_WAIT_PROPS_MS`          | Wait milliseconds per property after discovery before publishing property values. May be increased, if entities in HA are not populated with values.                                         | `50`                                          |
+| `MQTT_CLIENT_ID`            | MQTT client ID                                                                                                                                                                               | `wattpilot2mqtt`                              |
+| `MQTT_DECOMPOSE_PROPERTIES` | Whether compound properties (e.g. JSON arrays or objects) should be decomposed into separate properties                                                                                      | `true`                                        |
+| `MQTT_ENABLED`              | Enable MQTT                                                                                                                                                                                  | `false`                                       |
+| `MQTT_HOST`                 | MQTT host to connect to                                                                                                                                                                      |                                               |
+| `MQTT_PORT`                 | Port of the MQTT host to connect to                                                                                                                                                          | `1883`                                        |
+| `MQTT_PROPERTIES`           | List of space-separated property names to publish changes for (leave unset for all properties)                                                                                               |                                               |
+| `MQTT_PUBLISH_MESSAGES`     | Publish received Wattpilot messages to MQTT                                                                                                                                                  | `false`                                       |
+| `MQTT_PUBLISH_PROPERTIES`   | Publish received property values to MQTT                                                                                                                                                     | `true`                                        |
+| `MQTT_TOPIC_BASE`           | Base topic for MQTT                                                                                                                                                                          | `wattpilot`                                   |
+| `MQTT_TOPIC_MESSAGES`       | Topic pattern to publish Wattpilot messages to                                                                                                                                               | `{baseTopic}/messages/{messageType}`          |
+| `MQTT_TOPIC_PROPERTY_BASE`  | Base topic for properties                                                                                                                                                                    | `{baseTopic}/properties/{propName}`           |
+| `MQTT_TOPIC_PROPERTY_SET`   | Topic pattern to listen for property value changes for                                                                                                                                       | `~/set`                                       |
+| `MQTT_TOPIC_PROPERTY_STATE` | Topic pattern to publish property values to                                                                                                                                                  | `~/state`                                     |
+| `WATTPILOT_AUTOCONNECT`     | Automatically connect to Wattpilot on startup                                                                                                                                                | `true`                                        |
+| `WATTPILOT_CONNECT_TIMEOUT` | Connect timeout for Wattpilot connection                                                                                                                                                     | `30`                                          |
+| `WATTPILOT_DEBUG_LEVEL`     | Debug level                                                                                                                                                                                  | `INFO`                                        |
+| `WATTPILOT_HOST`            | IP address of the Wattpilot device to connect to                                                                                                                                             |                                               |
+| `WATTPILOT_INIT_TIMEOUT`    | Wait timeout for property initialization                                                                                                                                                     | `30`                                          |
+| `WATTPILOT_PASSWORD`        | Password for connecting to the Wattpilot device                                                                                                                                              |                                               |
 
 ## HELP improving wattpilot.yaml
 
