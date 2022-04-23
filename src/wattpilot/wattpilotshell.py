@@ -410,7 +410,7 @@ def shell_process_command(wp, wpcfg, cmdline):
 
 def shell_complete(text, state):
     """Simple readline completer"""
-    vocab = [x.value for x in list(ShellCommand)]
+    vocab = [x.value.name for x in list(ShellCommand)]
     results = [x for x in vocab if x.startswith(text)] + [None]
     _LOGGER.debug(f"Completion results: {results}")
     return results[state]
