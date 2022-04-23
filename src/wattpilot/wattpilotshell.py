@@ -13,6 +13,7 @@ import pkgutil
 
 from ast import arg
 from enum import Enum
+from importlib.metadata import version
 from time import sleep
 from threading import Event
 from types import SimpleNamespace
@@ -84,6 +85,7 @@ def wp_read_config():
 
 
 def wp_initialize(host, password):
+    global wp
     # Connect to Wattpilot:
     wp = wattpilot.Wattpilot(host, password)
     wp.connect()
@@ -143,14 +145,30 @@ def shell_watched_message_received(wp, wsapp, msg, msg_json):
         _LOGGER.info(f"Message of type {msg.type} received: {msg}")
 
 
-def shell_cmd_exit(wp, args):
+def shell_ensure_connected():
+    if not wp:
+        print('Not connected to wattpilot!')
+        return False
     return True
 
 
-def shell_cmd_get(wp, args):
+def shell_cmd_connect(cmd, _, args):
+    global WATTPILOT_HOST
+    global WATTPILOT_PASSWORD
+    global wp
+    wp = wp_initialize(WATTPILOT_HOST, WATTPILOT_PASSWORD)
+
+
+def shell_cmd_exit(cmd, wp, args):
+    return True
+
+
+def shell_cmd_get(cmd, wp, args):
     global wp_propdef
+    if not shell_ensure_connected():
+        return
     if len(args) != 1:
-        _LOGGER.error(f"Wrong number of arguments: get <property>")
+        _LOGGER.error(f"Wrong number of arguments: {cmd.synopsis()}")
     elif args[0] not in wp.allProps:
         _LOGGER.error(f"Unknown property: {args[0]}")
     else:
@@ -158,13 +176,15 @@ def shell_cmd_get(wp, args):
         print(mqtt_get_encoded_property(pd, wp.allProps[args[0]]))
 
 
-def shell_cmd_ha(wp, args):
+def shell_cmd_ha(cmd, wp, args):
     global HA_ENABLED
     global HA_PROPERTIES
     global mqtt_client
+    if not shell_ensure_connected():
+        return
     if len(args) != 1:
         _LOGGER.error(
-            f"Wrong number of arguments: {ShellCommand.HA.value.help()}")
+            f"Wrong number of arguments: {cmd.synopsis()}")
         return
     if args[0] == "start":
         HA_ENABLED = 'true'
@@ -179,23 +199,27 @@ def shell_cmd_ha(wp, args):
         _LOGGER.error(f"Unsupported argument: {args[0]}")
 
 
-def shell_cmd_help(wp, args):
+def shell_cmd_help(cmd, wp, args):
     print("Wattpilot Shell Commands:")
     for cmd_desc in list(ShellCommand):
         c = cmd_desc.value
         print(f"  {c.help()}")
 
 
-def shell_cmd_info(wp, args):
+def shell_cmd_info(cmd, wp, args):
+    if not shell_ensure_connected():
+        return
     print(wp)
 
 
-def shell_cmd_mqtt(wp, args):
+def shell_cmd_mqtt(cmd, wp, args):
     global mqtt_client
     global MQTT_ENABLED
+    if not shell_ensure_connected():
+        return
     if len(args) != 1:
         _LOGGER.error(
-            f"Wrong number of arguments: {ShellCommand.MQTT.value.help()}")
+            f"Wrong number of arguments: {cmd.synopsis()}")
         return
     if args[0] == "start":
         MQTT_ENABLED = 'true'
@@ -210,8 +234,10 @@ def shell_cmd_mqtt(wp, args):
         _LOGGER.error(f"Unsupported argument: {args[0]}")
 
 
-def shell_cmd_properties(wp, args):
+def shell_cmd_properties(cmd, wp, args):
     global wpcfg
+    if not shell_ensure_connected():
+        return
     print(f"Properties:")
     props = shell_get_props_matching_regex(wp, args)
     for pd, value in sorted(props.items()):
@@ -219,7 +245,9 @@ def shell_cmd_properties(wp, args):
     print()
 
 
-def shell_cmd_server(wp, args):
+def shell_cmd_server(cmd, wp, args):
+    if not shell_ensure_connected():
+        return
     _LOGGER.info("Server started.")
     try:
         Event().wait()
@@ -228,10 +256,12 @@ def shell_cmd_server(wp, args):
     return True
 
 
-def shell_cmd_set(wp, args):
+def shell_cmd_set(cmd, wp, args):
     global wp_propdef
+    if not shell_ensure_connected():
+        return
     if len(args) != 2:
-        _LOGGER.error(f"Wrong number of arguments: set <property> <value>")
+        _LOGGER.error(f"Wrong number of arguments: {cmd.synopsis()}")
     elif args[0] not in wp.allProps:
         _LOGGER.error(f"Unknown property: {args[0]}")
     else:
@@ -247,8 +277,10 @@ def shell_cmd_set(wp, args):
             wp_propdef[args[0]], v))
 
 
-def shell_cmd_values(wp, args):
+def shell_cmd_values(cmd, wp, args):
     global wpcfg
+    if not shell_ensure_connected():
+        return
     print(f"List values of properties (with value mapping):")
     props = shell_get_props_matching_regex(wp, args)
     for pd, value in sorted(props.items()):
@@ -257,7 +289,9 @@ def shell_cmd_values(wp, args):
     print()
 
 
-def shell_cmd_values_raw(wp, args):
+def shell_cmd_values_raw(cmd, wp, args):
+    if not shell_ensure_connected():
+        return
     print(f"List raw values of properties (without value mapping):")
     props = shell_get_props_matching_regex(wp, args)
     for pd, value in sorted(props.items()):
@@ -281,29 +315,35 @@ def shell_watch_property(wp, name):
         shell_watching_properties.append(name)
 
 
-def shell_cmd_watch_message(wp, args):
+def shell_cmd_watch_message(cmd, wp, args):
     global wpcfg
+    if not shell_ensure_connected():
+        return
     if len(args) != 1:
-        _LOGGER.error(f"Wrong number of arguments!")
+        _LOGGER.error(f"Wrong number of arguments: {cmd.synopsis()}")
     elif args[0] not in wpcfg['messages']:
         _LOGGER.error(f"Unknown message type: {args[0]}")
     else:
         shell_watch_message(wp, args[0])
 
 
-def shell_cmd_watch_property(wp, args):
+def shell_cmd_watch_property(cmd, wp, args):
+    if not shell_ensure_connected():
+        return
     if len(args) != 1:
-        _LOGGER.error(f"Wrong number of arguments!")
+        _LOGGER.error(f"Wrong number of arguments: {cmd.synopsis()}")
     elif args[0] not in wp.allProps:
         _LOGGER.error(f"Unknown property: {args[0]}")
     else:
         shell_watch_property(wp, args[0])
 
 
-def shell_cmd_unwatch_message(wp, args):
+def shell_cmd_unwatch_message(cmd, wp, args):
     global shell_watching_messages
+    if not shell_ensure_connected():
+        return
     if len(args) != 1:
-        _LOGGER.error(f"Wrong number of arguments!")
+        _LOGGER.error(f"Wrong number of arguments: {cmd.synopsis()}")
     elif args[0] not in shell_watching_messages:
         _LOGGER.warning(f"Message of type '{args[0]}' is not watched")
     else:
@@ -312,10 +352,12 @@ def shell_cmd_unwatch_message(wp, args):
             wp.unregister_message_callback()
 
 
-def shell_cmd_unwatch_property(wp, args):
+def shell_cmd_unwatch_property(cmd, wp, args):
     global shell_watching_properties
+    if not shell_ensure_connected():
+        return
     if len(args) != 1:
-        _LOGGER.error(f"Wrong number of arguments!")
+        _LOGGER.error(f"Wrong number of arguments: {cmd.synopsis()}")
     elif args[0] not in shell_watching_properties:
         _LOGGER.warning(f"Property with name '{args[0]}' is not watched")
     else:
@@ -347,10 +389,14 @@ class CmdDesc():
         self.execute = fn
 
     def help(self):
-        return f"{self.name}{(' ' + self.args) if self.args else ''}: {self.desc}"
+        return f"{self.synopsis()}: {self.desc}"
+
+    def synopsis(self):
+        return f"{self.name}{(' ' + self.args) if self.args else ''}"
 
 
 class ShellCommand(Enum):
+    CONNECT = CmdDesc('connect', '', 'Connect to Wattpilot', shell_cmd_connect)
     EXIT = CmdDesc('exit', '', 'Exit the shell', shell_cmd_exit)
     GET = CmdDesc('get', '<propName>', 'Get a property value', shell_cmd_get)
     HA = CmdDesc('ha', '<start|status|stop>',
@@ -396,15 +442,16 @@ def shell_process_command(wp, wpcfg, cmdline):
 
     exit = False
     cmd_args = cmd_parser.parse_args(args=cmdline.strip().split(' '))
-    cmd = cmd_args.cmd.strip()
+    cmd_str = cmd_args.cmd.strip()
     args = cmd_args.args
-    if (cmd == ''):
+    if (cmd_str == ''):
         # Don't do anything
         exit = False
-    elif ShellCommand.from_name(cmd):
-        exit = ShellCommand.from_name(cmd).value.execute(wp, args)
+    elif ShellCommand.from_name(cmd_str):
+        cmd = ShellCommand.from_name(cmd_str).value
+        exit = cmd.execute(cmd, wp, args)
     else:
-        print(f"Unknown command: {cmd}")
+        print(f"Unknown command: {cmd_str}")
     return exit
 
 
@@ -435,7 +482,9 @@ def shell_start(wp, wpcfg, args):
         shell_process_command(wp, wpcfg, args.cmdline)
     else:
         # Start interactive shell
-        shell_process_command(wp, wpcfg, "info")
+        print(f"Wattpilot Shell {version('wattpilot')}")
+        if wp:
+            shell_process_command(wp, wpcfg, "info")
         exit = False
         while not exit:
             try:
@@ -854,6 +903,7 @@ def main_setup_env():
     global MQTT_TOPIC_PROPERTY_BASE
     global MQTT_TOPIC_PROPERTY_SET
     global MQTT_TOPIC_PROPERTY_STATE
+    global WATTPILOT_AUTOCONNECT
     global WATTPILOT_CONNECT_TIMEOUT
     global WATTPILOT_DEBUG_LEVEL
     global WATTPILOT_HOST
@@ -883,6 +933,7 @@ def main_setup_env():
         'MQTT_TOPIC_PROPERTY_SET', '~/set')
     MQTT_TOPIC_PROPERTY_STATE = os.environ.get(
         'MQTT_TOPIC_PROPERTY_STATE', '~/state')
+    WATTPILOT_AUTOCONNECT = os.environ.get('WATTPILOT_AUTOCONNECT', 'true')
     WATTPILOT_CONNECT_TIMEOUT = int(
         os.environ.get('WATTPILOT_CONNECT_TIMEOUT', '30'))
     WATTPILOT_DEBUG_LEVEL = os.environ.get('WATTPILOT_DEBUG_LEVEL', 'INFO')
@@ -897,6 +948,7 @@ def main():
     global WATTPILOT_PASSWORD
     global MQTT_ENABLED
     global MQTT_HOST
+    global WATTPILOT_AUTOCONNECT
     global WATTPILOT_DEBUG_LEVEL
     global shell_watching_properties
     global shell_watching_messages
@@ -925,7 +977,10 @@ def main():
     mqtt_client = None
 
     args = shell_setup()
-    wp = wp_initialize(WATTPILOT_HOST, WATTPILOT_PASSWORD)
+    if WATTPILOT_AUTOCONNECT == 'true':
+        wp = wp_initialize(WATTPILOT_HOST, WATTPILOT_PASSWORD)
+    else:
+        wp = None
 
     # Enable MQTT and/or HA integration:
     if MQTT_ENABLED == "true" and HA_ENABLED == "false":

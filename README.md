@@ -22,6 +22,7 @@ export WATTPILOT_PASSWORD=<password>
 wattpilotshell
 > help
 Wattpilot Shell Commands:
+  connect: Connect to Wattpilot
   exit: Exit the shell
   get <propName>: Get a property value
   ha <start|status|stop>: Control Home Assistant discovery (+MQTT client)

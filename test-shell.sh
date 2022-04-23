@@ -10,7 +10,7 @@ export PYTHONPATH=src
 
 WPCONFIG_FILE="src/wattpilot/ressources/wattpilot.yaml"
 
-cmd="${1:-ha-default}"
+cmd="${1:-shell}"
 shift 1
 
 function runShell() {
