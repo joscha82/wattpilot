@@ -1,25 +1,19 @@
-import argparse
 import cmd
 import json
 import logging
 import math
 import os
-from typing_extensions import Self
 import paho.mqtt.client as mqtt
 import re
-import readline
 import sys
 import wattpilot
 import yaml
 import pkgutil
 
-from ast import arg
-from enum import Enum
 from importlib.metadata import version
 from time import sleep
 from threading import Event
 from types import SimpleNamespace
-from typing import Any, Callable, List
 
 _LOGGER = logging.getLogger(__name__)
 
