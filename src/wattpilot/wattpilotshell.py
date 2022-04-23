@@ -79,7 +79,7 @@ def wp_read_config():
         _LOGGER.debug(
             f"Resulting properties config:\n{utils_value2json(wpcfg['properties'])}")
     except yaml.YAMLError as exc:
-        print(exc)
+        _LOGGER.fatal(exc)
     return wpcfg
 
 
@@ -249,7 +249,7 @@ def shell_cmd_set(wp, args):
 
 def shell_cmd_values(wp, args):
     global wpcfg
-    print(f"List mapped values of available properties:")
+    print(f"List values of properties (with value mapping):")
     props = shell_get_props_matching_regex(wp, args)
     for pd, value in sorted(props.items()):
         print(
@@ -258,7 +258,7 @@ def shell_cmd_values(wp, args):
 
 
 def shell_cmd_values_raw(wp, args):
-    print(f"List raw values of available properties:")
+    print(f"List raw values of properties (without value mapping):")
     props = shell_get_props_matching_regex(wp, args)
     for pd, value in sorted(props.items()):
         print(f"- {pd}: {utils_value2json(value)}")
@@ -412,6 +412,7 @@ def shell_complete(text, state):
     """Simple readline completer"""
     vocab = [x.value for x in list(ShellCommand)]
     results = [x for x in vocab if x.startswith(text)] + [None]
+    _LOGGER.debug(f"Completion results: {results}")
     return results[state]
 
 
@@ -439,7 +440,7 @@ def shell_start(wp, wpcfg, args):
         while not exit:
             try:
                 command = input('> ')
-            except EOFError:
+            except (EOFError, KeyboardInterrupt):
                 command = "exit"
                 print()
             exit = shell_process_command(wp, wpcfg, command)
@@ -939,7 +940,6 @@ if __name__ == '__main__':
     try:
         main()
     except KeyboardInterrupt:
-        print('Interrupted')
         try:
             sys.exit(0)
         except SystemExit:
