@@ -261,11 +261,11 @@ Usage: rawvalues [propRegex] [valueRegex]"""
 Usage: server"""
         if not self._ensure_connected():
             return
-        print("Server started.")
+        _LOGGER.info("Server started.")
         try:
             Event().wait()
         except KeyboardInterrupt:
-            print("Shutting down.")
+            _LOGGER.info("Server shutting down.")
         return True
 
     def do_set(self, arg: str) -> bool | None:
