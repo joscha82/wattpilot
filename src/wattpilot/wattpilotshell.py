@@ -555,8 +555,11 @@ def mqtt_publish_property(wp, mqtt_client, pd, value, force_publish=False):
                 if isinstance(value, SimpleNamespace) and p["valueRef"] in value.__dict__:
                     v = value.__dict__[p["valueRef"]]
                     _LOGGER.debug(f"  -> got object value {v}")
+                elif p["valueRef"] in value:
+                    v = value[p["valueRef"]]
+                    _LOGGER.debug(f"  -> got object value {v}")
                 else:
-                    _LOGGER.warning(f"Unable to map child property {p['key']}: {utils_value2json(value)}")
+                    _LOGGER.warning(f"Unable to map child property {p['key']}: type={type(value)}, value={utils_value2json(value)}")
                     continue
             else:
                 continue
