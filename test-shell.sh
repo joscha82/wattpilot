@@ -14,7 +14,7 @@ cmd="${1:-shell}"
 shift 1
 
 function runShell() {
-    python -m wattpilot.wattpilotshell
+    python -m wattpilot.wattpilotshell "${@}"
 }
 
 function runShellWithProps() {
@@ -32,7 +32,10 @@ function runShellWithAllProps() {
 
 case "${cmd}" in
     shell)
-        MQTT_ENABLED=false HA_ENABLED=false runShell
+        WATTPILOT_AUTOCONNECT=false MQTT_ENABLED=false HA_ENABLED=false runShell "${@}"
+    ;;
+    server)
+        WATTPILOT_AUTOCONNECT=true MQTT_ENABLED=true HA_ENABLED=true runShell "server"
     ;;
     save)
         logfile=work/status-$(date +"%Y-%m-%d_%H-%M-%S")-${1:-adhoc}.log

@@ -99,6 +99,7 @@ class WattpilotShell(cmd.Cmd):
     intro = f"Welcome to the Wattpilot Shell {version('wattpilot')}.   Type help or ? to list commands.\n"
     prompt = 'wattpilot> '
     file = None
+    global wp
 
     def postloop(self) -> None:
         print()
@@ -446,6 +447,7 @@ Usage: watch <message|property> <msgType|propName>"""
             _LOGGER.info(f"Message of type {msg.type} received: {msg}")
 
     def _ensure_connected(self):
+        global wp
         if not wp:
             print('Not connected to wattpilot!')
             return False
@@ -949,21 +951,20 @@ def main():
     shell_watching_messages = []
     mqtt_client = None
 
-    if WATTPILOT_AUTOCONNECT == 'true':
-        wp = wp_initialize(WATTPILOT_HOST, WATTPILOT_PASSWORD)
-    else:
-        wp = None
-
-    # Enable MQTT and/or HA integration:
-    if MQTT_ENABLED == "true" and HA_ENABLED == "false":
-        mqtt_client = mqtt_setup(wp)
-    elif MQTT_ENABLED == "true" and HA_ENABLED == "true":
-        mqtt_client = ha_setup(wp)
-
     wpsh = WattpilotShell()
     if WATTPILOT_AUTOCONNECT == 'true':
+        _LOGGER.info("Automatically connecting to Wattpilot ...")
+        wpsh.onecmd('connect')
+        # Enable MQTT and/or HA integration:
+        if MQTT_ENABLED == "true" and HA_ENABLED == "false":
+            wpsh.onecmd('mqtt start')
+        elif MQTT_ENABLED == "true" and HA_ENABLED == "true":
+            wpsh.onecmd('ha start')
         wpsh.onecmd('info')
-    wpsh.cmdloop()
+    if len(sys.argv) < 2:
+        wpsh.cmdloop()
+    else:
+        wpsh.onecmd(sys.argv[1])
 
 
 if __name__ == '__main__':
