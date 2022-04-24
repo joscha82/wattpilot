@@ -913,12 +913,14 @@ def main_setup_env():
         os.environ.get('WATTPILOT_INIT_TIMEOUT', '30'))
     WATTPILOT_PASSWORD = os.environ.get('WATTPILOT_PASSWORD', '')
 
+    # Ensure wattpilot host an password are set:
+    assert WATTPILOT_HOST != '', "WATTPILOT_HOST not set!"
+    assert WATTPILOT_PASSWORD != '', "WATTPILOT_PASSWORD not set!"
+    assert MQTT_ENABLED == 'false' or MQTT_HOST != '', 'MQTT_HOST not set!'
+
 
 def main():
-    global WATTPILOT_HOST
-    global WATTPILOT_PASSWORD
     global MQTT_ENABLED
-    global MQTT_HOST
     global WATTPILOT_AUTOCONNECT
     global WATTPILOT_DEBUG_LEVEL
     global mqtt_client
@@ -928,20 +930,16 @@ def main():
     # Setup environment variables:
     main_setup_env()
 
-    # Ensure wattpilot host an password are set:
-    assert WATTPILOT_HOST != '', "WATTPILOT_HOST not set!"
-    assert WATTPILOT_PASSWORD != '', "WATTPILOT_PASSWORD not set!"
-    assert MQTT_ENABLED == 'false' or MQTT_HOST != '', 'MQTT_HOST not set!'
-
     # Set debug level:
     logging.basicConfig(level=WATTPILOT_DEBUG_LEVEL)
 
     # Initialize globals:
-    wp = None
     mqtt_client = None
+    wp = None
     wpdef = wp_read_apidef()
-    wpsh = WattpilotShell()
 
+    # Initialize shell:
+    wpsh = WattpilotShell()
     if WATTPILOT_AUTOCONNECT == 'true':
         _LOGGER.info("Automatically connecting to Wattpilot ...")
         wpsh.onecmd('connect')
