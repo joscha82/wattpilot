@@ -99,7 +99,8 @@ class WattpilotShell(cmd.Cmd):
     intro = f"Welcome to the Wattpilot Shell {version('wattpilot')}.   Type help or ? to list commands.\n"
     prompt = 'wattpilot> '
     file = None
-    global wp
+    watching_messages = []
+    watching_properties = []
 
     def postloop(self) -> None:
         print()
@@ -310,38 +311,35 @@ Usage: set <propName> <value>"""
     def do_unwatch(self, arg: str) -> bool | None:
         """Unwatch a message or property
 Usage: unwatch <message|property> <msgType|propName>"""
-        global shell_watching_messages
         global wp
         args = arg.split(' ')
         if not self._ensure_connected():
             return
         if len(args) < 2 or arg == '':
             print(f"ERROR: Wrong number of arguments!")
-        elif args[0] == 'message' and args[1] not in shell_watching_messages:
+        elif args[0] == 'message' and args[1] not in self.watching_messages:
             print(f"ERROR: Message of type '{args[1]}' is not watched")
         elif args[0] == 'message':
-            shell_watching_messages.remove(args[1])
-            if len(shell_watching_messages) == 0:
+            self.watching_messages.remove(args[1])
+            if len(self.watching_messages) == 0:
                 wp.unregister_message_callback()
-        elif args[0] == 'property' and args[1] not in shell_watching_properties:
+        elif args[0] == 'property' and args[1] not in self.watching_properties:
             print(f"ERROR: Property with name '{args[1]}' is not watched")
         elif args[0] == 'property':
-            shell_watching_properties.remove(args[1])
-            if len(shell_watching_properties) == 0:
+            self.watching_properties.remove(args[1])
+            if len(self.watching_properties) == 0:
                 wp.unregister_property_callback()
         else:
             print(f"ERROR: Unknown watch type: {args[0]}")
 
     def complete_unwatch(self, text, line, begidx, endidx):
-        global shell_watching_messages
-        global shell_watching_properties
         token = line.split(' ')
         if len(token) == 2:
             return self._complete_list(['message', 'property'], text)
         elif len(token) == 3 and token[1] == 'message':
-            return self._complete_list(shell_watching_messages, text)
+            return self._complete_list(self.watching_messages, text)
         elif len(token) == 3 and token[1] == 'property':
-            return self._complete_list(shell_watching_properties, text)
+            return self._complete_list(self.watching_properties, text)
         return []
 
     def do_values(self, arg: str) -> bool | None:
@@ -375,20 +373,18 @@ Usage: watch <message|property> <msgType|propName>"""
             print(f"ERROR: Unknown message type: {args[1]}")
         elif args[0] == 'message':
             msg_type = args[1]
-            global shell_watching_messages
-            if len(shell_watching_messages) == 0:
+            if len(self.watching_messages) == 0:
                 wp.register_message_callback(self._watched_message_received)
-            if msg_type not in shell_watching_messages:
-                shell_watching_messages.append(msg_type)
+            if msg_type not in self.watching_messages:
+                self.watching_messages.append(msg_type)
         elif args[0] == 'property' and args[1] not in wp.allProps:
             print(f"ERROR: Unknown property: {args[1]}")
         elif args[0] == 'property':
             prop_name = args[1]
-            global shell_watching_properties
-            if len(shell_watching_properties) == 0:
+            if len(self.watching_properties) == 0:
                 wp.register_property_callback(self._watched_property_changed)
-            if prop_name not in shell_watching_properties:
-                shell_watching_properties.append(prop_name)
+            if prop_name not in self.watching_properties:
+                self.watching_properties.append(prop_name)
         else:
             print(f"ERROR: Unknown watch type: {args[0]}")
 
@@ -435,15 +431,13 @@ Usage: watch <message|property> <msgType|propName>"""
 
     def _watched_property_changed(self, name, value):
         global wp_propdef
-        global shell_watching_properties
-        if name in shell_watching_properties:
+        if name in self.watching_properties:
             pd = wp_propdef[name]
             _LOGGER.info(
                 f"Property {name} changed to {mqtt_get_encoded_property(pd,value)}")
 
     def _watched_message_received(self, wp, wsapp, msg, msg_json):
-        global shell_watching_messages
-        if msg.type in shell_watching_messages:
+        if msg.type in self.watching_messages:
             _LOGGER.info(f"Message of type {msg.type} received: {msg}")
 
     def _ensure_connected(self):
@@ -925,8 +919,6 @@ def main():
     global MQTT_HOST
     global WATTPILOT_AUTOCONNECT
     global WATTPILOT_DEBUG_LEVEL
-    global shell_watching_properties
-    global shell_watching_messages
     global mqtt_client
     global wp
     global wp_propdef
@@ -942,14 +934,13 @@ def main():
     # Set debug level:
     logging.basicConfig(level=WATTPILOT_DEBUG_LEVEL)
 
+    # Initialize globals:
+    wp = None
+    mqtt_client = None
+
     # Read config:
     wpcfg = wp_read_config()
     wp_propdef = wpcfg["properties"]
-
-    # Initialize globals:
-    shell_watching_properties = []
-    shell_watching_messages = []
-    mqtt_client = None
 
     wpsh = WattpilotShell()
     if WATTPILOT_AUTOCONNECT == 'true':

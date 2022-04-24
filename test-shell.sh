@@ -40,7 +40,9 @@ case "${cmd}" in
     save)
         logfile=work/status-$(date +"%Y-%m-%d_%H-%M-%S")-${1:-adhoc}.log
         mkdir -p work
-        WATTPILOT_DEBUG_LEVEL=WARNING MQTT_ENABLED=false HA_ENABLED=false runShell "list" >${logfile} 2>&1
+        WATTPILOT_DEBUG_LEVEL=WARNING MQTT_ENABLED=false HA_ENABLED=false runShell "values" >>${logfile} 2>&1
+        WATTPILOT_DEBUG_LEVEL=WARNING MQTT_ENABLED=false HA_ENABLED=false runShell "rawvalues" >>${logfile} 2>&1
+        WATTPILOT_DEBUG_LEVEL=WARNING MQTT_ENABLED=false HA_ENABLED=false runShell "properties" >>${logfile} 2>&1
     ;;
     ha-default)
         runShellWithProps ""
