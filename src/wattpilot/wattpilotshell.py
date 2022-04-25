@@ -134,7 +134,7 @@ class WattpilotShell(cmd.Cmd):
         return True
 
     def do_connect(self, arg: str) -> bool | None:
-        """Connect to Wattpilot
+        """Connect to Wattpilot (using WATTPILOT_* env variables)
 Usage: connect"""
         global WATTPILOT_HOST
         global WATTPILOT_PASSWORD
@@ -167,7 +167,28 @@ Usage: get <propName>"""
 
     def do_ha(self, arg: str) -> bool | None:
         """Control Home Assistant discovery (+MQTT client)
-Usage: ha <start|status|stop>"""
+Usage: ha <enable|disable|discover|properties|start|status|stop|undiscover> [args...]
+
+Home Assistant commands:
+  enable <propName>
+    Enable a discovered entity representing the property <propName>
+    NOTE: Re-enabling of disabled entities may still be broken in HA and require a restart of HA.
+  disable <propName>
+    Disable a discovered entity representing the property <propName>
+  discover <propName>
+    Let HA discover an entity representing the property <propName>
+  properties
+    List properties activated for HA discovery
+  start
+    Start HA MQTT discovery (using HA_* env variables)
+  status
+    Status of HA MQTT discovery
+  stop
+    Stop HA MQTT discovery
+  undiscover <propName>
+    Let HA remove a discovered entity representing the property <propName>
+    NOTE: Removing of disabled entities may still be broken in HA and require a restart of HA.
+"""
         global HA_ENABLED
         global HA_PROPERTIES
         global mqtt_client
@@ -177,7 +198,9 @@ Usage: ha <start|status|stop>"""
         if len(args) < 1 or arg == '':
             print(f"ERROR: Wrong number of arguments!")
             return
-        if args[0] == "start":
+        if args[0] == "properties":
+            print(f"List of properties activated for discovery: {HA_PROPERTIES}")
+        elif args[0] == "start":
             HA_ENABLED = 'true'
             mqtt_client = ha_setup(wp)
         elif args[0] == "stop":
@@ -186,11 +209,35 @@ Usage: ha <start|status|stop>"""
         elif args[0] == "status":
             print(
                 f"HA discovery is {'enabled' if HA_ENABLED == 'true' else 'disabled'}.")
+        elif len(args)>1 and args[0] in ['enable', 'disable', 'discover', 'undiscover']:
+            self._ha_prop_cmds(args[0], args[1])
         else:
             print(f"ERROR: Unsupported argument: {args[0]}")
+    
+    def _ha_prop_cmds(self, cmd, prop_name):
+        global mqtt_client
+        global wp
+        global wpdef
+        if prop_name not in wpdef["properties"]:
+            print(f"ERROR: Unknown property '{prop_name}!")
+        elif cmd == "enable":
+            ha_discover_property(wp, mqtt_client, wpdef["properties"][prop_name], False, True)
+        elif cmd == "disable":
+            ha_discover_property(wp, mqtt_client, wpdef["properties"][prop_name], False, False)
+        elif cmd == "discover":
+            ha_discover_property(wp, mqtt_client, wpdef["properties"][prop_name], False)
+        elif cmd == "undiscover":
+            ha_discover_property(wp, mqtt_client, wpdef["properties"][prop_name], True)
 
     def complete_ha(self, text, line, begidx, endidx):
-        return self._complete_list(['start', 'status', 'stop'], text)
+        token = line.split(' ')
+        if len(token)==2:
+            return self._complete_list(['enable', 'disable', 'discover', 'properties', 'start', 'status', 'stop', 'undiscover'], text)
+        elif len(token)==3 and token[1]=='discover':
+            return self._complete_list([p for p in self._complete_propname(text) if p not in HA_PROPERTIES], text)
+        elif len(token)==3 and token[1] in ['enable', 'disable', 'undiscover']:
+            return self._complete_list(HA_PROPERTIES,text)
+        return []
 
     def do_info(self, arg: str) -> bool | None:
         """Print device infos
@@ -201,8 +248,31 @@ Usage: info"""
         print(wp)
 
     def do_mqtt(self, arg: str) -> bool | None:
-        """Control MQTT support
-Usage: mqtt <start|status|stop>"""
+        """Control the MQTT bridge
+Usage: mqtt <publish|start|status|stop|unpublish> [args...]
+
+MQTT commands:
+  properties
+    List properties activated for MQTT publishing
+  publish <messages|properties>
+    Enable publishing of messages or properties
+  publish <message> <msgType>
+    Enable publishing of a certain message type
+  publish <property> <propName>
+    Enable publishing of a certain property
+  start
+    Start the MQTT bridge (using MQTT_* env variables)
+  status
+    Status of the MQTT bridge
+  stop
+    Stop the MQTT bridge
+  unpublish <messages|properties>
+    Disable publishing of messages or properties
+  unpublish <message> <msgType>
+    Disable publishing of a certain message type
+  unpublish <property> <propName>
+    Disable publishing of a certain property
+"""
         global MQTT_ENABLED
         global mqtt_client
         global wp
@@ -212,7 +282,9 @@ Usage: mqtt <start|status|stop>"""
         if len(args) < 1 or arg == '':
             print(f"ERROR: Wrong number of arguments!")
             return
-        if args[0] == "start":
+        if args[0] == "properties":
+            print(f"List of properties activated for MQTT publishing: {MQTT_PROPERTIES}")
+        elif args[0] == "start":
             MQTT_ENABLED = 'true'
             mqtt_client = mqtt_setup(wp)
         elif args[0] == "stop":
@@ -221,11 +293,32 @@ Usage: mqtt <start|status|stop>"""
         elif args[0] == "status":
             print(
                 f"MQTT client is {'enabled' if MQTT_ENABLED == 'true' else 'disabled'}.")
+        elif len(args)>1 and args[0] in ['publish', 'unpublish']:
+            self._mqtt_prop_cmds(args[0], args[1])
         else:
             print(f"ERROR: Unsupported argument: {args[0]}")
 
+    def _mqtt_prop_cmds(self, cmd, prop_name):
+        global MQTT_PROPERTIES
+        global mqtt_client
+        global wp
+        global wpdef
+        if prop_name not in wpdef["properties"]:
+            print(f"ERROR: Undefined property '{prop_name}'!")
+        elif cmd == "publish" and prop_name not in MQTT_PROPERTIES:
+            MQTT_PROPERTIES.append(prop_name)
+        elif cmd == "unpublish" and prop_name in MQTT_PROPERTIES:
+            MQTT_PROPERTIES.remove(prop_name)
+
     def complete_mqtt(self, text, line, begidx, endidx):
-        return self._complete_list(['start', 'status', 'stop'], text)
+        token = line.split(' ')
+        if len(token)==2:
+            return self._complete_list(['properties', 'publish', 'start', 'status', 'stop', 'unpublish'], text)
+        elif len(token)==3 and token[1]=='publish':
+            return self._complete_list([p for p in self._complete_propname(text) if p not in MQTT_PROPERTIES], text)
+        elif len(token)==3 and token[1]=='unpublish':
+            return self._complete_list(MQTT_PROPERTIES,text)
+        return []
 
     def do_properties(self, arg: str) -> bool | None:
         """List property definitions and values
@@ -701,7 +794,7 @@ def ha_get_default_config_for_prop(prop_info):
     if "rw" in prop_info and prop_info["rw"] == "R/W":
         if "jsonType" in prop_info and \
             (prop_info["jsonType"] == "float" or prop_info["jsonType"] == "integer"):
-        config["mode"] = "box"
+            config["mode"] = "box"
         if "category" in prop_info and prop_info["category"] == "Config":
             config["entity_category"] = "config"
     if "homeAssistant" not in prop_info:
@@ -722,7 +815,7 @@ def ha_get_template_filter_from_json_type(json_type):
 # Publish HA discovery config for a single property
 
 
-def ha_discover_property(wp, mqtt_client, pd, disable_discovery=False):
+def ha_discover_property(wp, mqtt_client, pd, disable_discovery=False, force_enablement=None):
     global HA_TOPIC_CONFIG
     global MQTT_DECOMPOSE_PROPERTIES
     global MQTT_TOPIC_PROPERTY_BASE
@@ -769,6 +862,8 @@ def ha_discover_property(wp, mqtt_client, pd, disable_discovery=False):
         list(ha_discovery_config.items())
         + list(ha_config.items())
     )
+    if force_enablement != None:
+        ha_discovery_config["enabled_by_default"] = force_enablement
     topic_cfg = mqtt_subst_topic(HA_TOPIC_CONFIG, topic_subst_map)
     if disable_discovery:
         payload = ''
@@ -785,7 +880,7 @@ def ha_discover_property(wp, mqtt_client, pd, disable_discovery=False):
         mqtt_client.publish(mqtt_subst_topic(HA_TOPIC_CONFIG, topic_subst_map | {"component": "sensor"}), payload, retain=True)
     if MQTT_DECOMPOSE_PROPERTIES and "childProps" in pd:
         for p in pd["childProps"]:
-            ha_discover_property(wp, mqtt_client, p, disable_discovery)
+            ha_discover_property(wp, mqtt_client, p, disable_discovery, force_enablement)
 
 
 def ha_get_discovery_properties():

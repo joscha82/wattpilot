@@ -17,6 +17,10 @@ function runShell() {
     python -m wattpilot.wattpilotshell "${@}"
 }
 
+function runShellOnly() {
+    WATTPILOT_AUTOCONNECT=false MQTT_ENABLED=false HA_ENABLED=false runShell "${@}"
+}
+
 function runShellWithProps() {
     PROPS="${1:-}"
     echo "Enabled properties: ${PROPS}"
@@ -32,10 +36,10 @@ function runShellWithAllProps() {
 
 case "${cmd}" in
     default)
-        runShell
+        runShell "${@}"
     ;;
     shell-only)
-        WATTPILOT_AUTOCONNECT=false MQTT_ENABLED=false HA_ENABLED=false runShell "${@}"
+        runShellOnly "${@}"
     ;;
     server)
         WATTPILOT_AUTOCONNECT=true MQTT_ENABLED=true HA_ENABLED=true runShell "server"
@@ -73,6 +77,26 @@ case "${cmd}" in
     ;;
     ha-test-string)
         runShellWithProps "ffna fna"
+    ;;
+    update-docs)
+        python gen-apidocs.py >API.md
+        (
+            echo "# Wattpilot Shell Commands"
+            for cmd in $(
+                runShellOnly "help" \
+                | awk 'BEGIN {p=0} {if(p) print $0} /^==/ {p=1}' \
+                | xargs -n 1 echo \
+                | grep -E -v '^EOF$' \
+                | sort \
+            ); do
+                echo ""
+                echo "## ${cmd}"
+                echo ""
+                echo "\`\`\`bash"
+                runShellOnly "help ${cmd}"
+                echo "\`\`\`"
+            done
+        ) >ShellCommands.md
     ;;
     *)
         echo "Unknown command: ${cmd}"

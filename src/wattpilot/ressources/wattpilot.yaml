@@ -1250,7 +1250,7 @@ properties:
       config:
         device_class: frequency
         unit_of_measurement: Hz
-        enabled_by_default: false # Disabled by default since it produces a new value every second
+        enabled_by_default: false # Disabled by default due to high volume updates
   - key: fi23
     jsonType: boolean
     example: true
@@ -2598,6 +2598,7 @@ properties:
       config:
         device_class: signal_strength
         unit_of_measurement: dBm
+        enabled_by_default: false # Disabled by default due to high volume updates
   - key: rst
     alias: rebootCharger
     title: Reboot Charger
@@ -2875,6 +2876,7 @@ properties:
           config:
             device_class: temperature
             unit_of_measurement: °C
+            enabled_by_default: false # Disabled by default due to high volume updates
       - key: tma_2
         title: Temperature Sensor 2
         valueRef: 1
@@ -2883,6 +2885,7 @@ properties:
           config:
             device_class: temperature
             unit_of_measurement: °C
+            enabled_by_default: false # Disabled by default due to high volume updates
   - key: tof
     alias: timezoneOffset
     title: Timezone Offset

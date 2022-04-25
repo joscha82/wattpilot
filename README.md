@@ -4,6 +4,16 @@
 
 `wattpilot` is a Python 3 (>= 3.9) module to interact with Fronius Wattpilot wallboxes which do not support (at the time of writting) a documented API. This functionality of this module utilized a undocumented websockets API, which is also utilized by the official Wattpilot.Solar mobile app.
 
+## Wattpilot API Documentation
+
+See [API.md](API.md) for the current state of the API documentation this implementation is based on.
+
+It has been compiled from different sources, but primarily from:
+
+* [go-eCharger-API-v1](https://github.com/goecharger/go-eCharger-API-v1/blob/master/go-eCharger%20API%20v1%20EN.md)
+* [go-eCharger-API-v2](https://github.com/goecharger/go-eCharger-API-v2/blob/main/apikeys-en.md)
+
+
 ## Wattpilot Shell
 
 The shell provides an easy way to explore the available properties and get or set their values.
@@ -27,8 +37,10 @@ wattpilot> help
 Documented commands (type help <topic>):
 ========================================
 EOF      exit  ha    info  properties  server  unwatch  watch
-connect  get   help  mqtt  rawvalues   set     values
+connect  get   help  mqtt  rawvalues   set     values 
 ```
+
+All available shell commands are documented in more detail at [ShellCommands.md](ShellCommands.md).
 
 It's also possible to pass a single command to the shell to integrate it into scripts:
 
@@ -158,10 +170,10 @@ docker-compose run wattpilot shell
 | `WATTPILOT_INIT_TIMEOUT`    | Wait timeout for property initialization                                                                                                                                                     | `30`                                          |
 | `WATTPILOT_PASSWORD`        | Password for connecting to the Wattpilot device                                                                                                                                              |                                               |
 
-## HELP improving wattpilot.yaml
+## HELP improving API definition in wattpilot.yaml
 
-The MQTT and Home Assistant support heavily depends on the property description in `[src/wattpilot/ressources/wattpilot.yaml](wattpilot.yaml)` which has been compiled from different sources and das not yet contain a full set of information for all relevant properties.
-See [API.md](API.md) for a generated documentation of the data.
+The MQTT and Home Assistant support heavily depends on the API definition in [wattpilot.yaml](src/wattpilot/ressources/wattpilot.yaml) which has been compiled from different sources and does not yet contain a full set of information for all relevant properties.
+See [API.md](API.md) for a generated documentation of the available data.
 
 If you want to help, please have a look at the properties defined in `wattpilot.yaml` and fill in the missing pieces (e.g. `title`, `description`, `rw`, `jsonType`, `childProps`, `homeAssistant`, `device_class`, `unit_of_measurement`, `enabled_by_default`) to properties you care about.
 The file contains enough documentation and a lot of working examples to get you started.
