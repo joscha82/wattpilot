@@ -400,33 +400,23 @@ Usage: watch <message|property> <msgType|propName>"""
         return []
 
     def _print_prop_info(self, pd, value):
-        _LOGGER.debug(f"Property info: {pd}")
+        _LOGGER.debug(f"Property definition: {pd}")
         title = ""
         desc = ""
         alias = ""
         rw = ""
-        if 'rw' in pd:
-            rw = f", rw:{pd['rw']}"
         if 'alias' in pd:
             alias = f", alias:{pd['alias']}"
+        if 'rw' in pd:
+            rw = f", rw:{pd['rw']}"
         if 'title' in pd:
             title = pd['title']
         if 'description' in pd:
             desc = pd['description']
-        print(f"- {pd['key']} ({pd['jsonType']}{rw}{alias}): {title}")
-        print(f"  Raw Value: {utils_value2json(value)}")
-        if "valueMap" in pd:
-            print(f"  Mapped Value: {mqtt_get_encoded_property(pd,value)}")
+        print(f"- {pd['key']} ({pd['jsonType']}{alias}{rw}): {title}")
         if desc:
             print(f"  Description: {desc}")
-        if 'itemType' in pd:
-            print(f"  Array item type: {pd['itemType']}")
-        if 'min' in pd:
-            print(f"  Minimum value: {pd['min']}")
-        if 'max' in pd:
-            print(f"  Maximum value: {pd['max']}")
-        if 'example' in pd:
-            print(f"  Example: {utils_value2json(pd['example'])}")
+        print(f"  Value: {mqtt_get_encoded_property(pd,value)}{' (raw:' + utils_value2json(value) + ')' if 'valueMap' in pd else ''}")
 
     def _watched_property_changed(self, name, value):
         global wpdef
@@ -477,7 +467,7 @@ def mqtt_get_mapped_value(pd, value):
 
 
 def mqtt_get_mapped_property(pd, value):
-    if "jsonType" in pd and pd["jsonType"] == "array":
+    if value and "jsonType" in pd and pd["jsonType"] == "array":
         mapped_value = []
         for v in value:
             mapped_value.append(mqtt_get_mapped_value(pd, v))
@@ -510,7 +500,7 @@ def mqtt_get_remapped_property(pd, mapped_value):
 
 def mqtt_get_encoded_property(pd, value):
     mapped_value = mqtt_get_mapped_property(pd, value)
-    if "jsonType" in pd and (
+    if value == None or "jsonType" in pd and (
             pd["jsonType"] == "array"
             or pd["jsonType"] == "object"
             or pd["jsonType"] == "boolean"):
