@@ -819,6 +819,12 @@ properties:
     description:
       charging energy limit, measured in Wh, null means disabled, not the
       next trip energy
+    homeAssistant:
+      component: number
+      config:
+        device_class: energy
+        state_class: total
+        unit_of_measurement: Wh
   - key: ecf
     alias: espCpuFreq
     title: ESP CPU Frequency
