@@ -10,7 +10,7 @@ export PYTHONPATH=src
 
 WPCONFIG_FILE="src/wattpilot/ressources/wattpilot.yaml"
 
-cmd="${1:-shell}"
+cmd="${1:-default}"
 shift 1
 
 function runShell() {
@@ -31,7 +31,10 @@ function runShellWithAllProps() {
 
 
 case "${cmd}" in
-    shell)
+    default)
+        runShell
+    ;;
+    shell-only)
         WATTPILOT_AUTOCONNECT=false MQTT_ENABLED=false HA_ENABLED=false runShell "${@}"
     ;;
     server)
@@ -70,5 +73,9 @@ case "${cmd}" in
     ;;
     ha-test-string)
         runShellWithProps "ffna fna"
+    ;;
+    *)
+        echo "Unknown command: ${cmd}"
+        exit 1
     ;;
 esac
