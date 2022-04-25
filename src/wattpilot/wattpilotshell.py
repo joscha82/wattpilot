@@ -708,10 +708,12 @@ def ha_get_component_for_prop(prop_info):
 
 def ha_get_default_config_for_prop(prop_info):
     config = {}
-    if "rw" in prop_info and prop_info["rw"] == "R/W" and \
-        "jsonType" in prop_info and \
+    if "rw" in prop_info and prop_info["rw"] == "R/W":
+        if "jsonType" in prop_info and \
             (prop_info["jsonType"] == "float" or prop_info["jsonType"] == "integer"):
         config["mode"] = "box"
+        if "category" in prop_info and prop_info["category"] == "Config":
+            config["entity_category"] = "config"
     if "homeAssistant" not in prop_info:
         config["enabled_by_default"] = False
     return config
@@ -785,6 +787,12 @@ def ha_discover_property(wp, mqtt_client, pd, disable_discovery=False):
     _LOGGER.debug(
         f"Publishing property '{name}' to {topic_cfg}: {payload}")
     mqtt_client.publish(topic_cfg, payload, retain=True)
+    # Publish additional read-only sensor for special rw properties:
+    if pd.get("rw", "") == "R/W" and component != "sensor":
+        if payload != "":
+            del ha_discovery_config["command_topic"]
+            payload = utils_value2json(ha_discovery_config)
+        mqtt_client.publish(mqtt_subst_topic(HA_TOPIC_CONFIG, topic_subst_map | {"component": "sensor"}), payload, retain=True)
     if MQTT_DECOMPOSE_PROPERTIES and "childProps" in pd:
         for p in pd["childProps"]:
             ha_discover_property(wp, mqtt_client, p, disable_discovery)
