@@ -40,7 +40,8 @@ EOF      exit  ha    info  properties  server  unwatch  watch
 connect  get   help  mqtt  rawvalues   set     values 
 ```
 
-All available shell commands are documented in more detail at [ShellCommands.md](ShellCommands.md).
+The shell supports TAB-completion for all commands and their arguments.
+Detailed documentation can be found in [ShellCommands.md](ShellCommands.md).
 
 It's also possible to pass a single command to the shell to integrate it into scripts:
 
