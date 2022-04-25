@@ -580,18 +580,15 @@ def mqtt_publish_message(wp, wsapp, msg, msg_json):
     if mqtt_client == None:
         _LOGGER.debug(f"Skipping MQTT message publishing.")
         return
-    if msg.type not in ["fullStatus", "deltaStatus"]:
-        _LOGGER.debug(f"Skipping MQTT message publishing of type {msg.type}.")
-        return
     msg_dict = json.loads(msg_json)
-    if MQTT_PUBLISH_MESSAGES == "true":
+    if MQTT_PUBLISH_MESSAGES == "true" and (MQTT_MESSAGES==[] or MQTT_MESSAGES==[''] or msg.type in MQTT_MESSAGES):
         message_topic = mqtt_subst_topic(MQTT_TOPIC_MESSAGES, {
             "baseTopic": MQTT_TOPIC_BASE,
             "serialNumber": wp.serial,
             "messageType": msg.type,
         })
         mqtt_client.publish(message_topic, msg_json)
-    if MQTT_PUBLISH_PROPERTIES == "true":
+    if MQTT_PUBLISH_PROPERTIES == "true" and msg.type in ["fullStatus", "deltaStatus"]:
         for prop_name, value in msg_dict["status"].items():
             pd = wpdef["properties"][prop_name]
             mqtt_publish_property(wp, mqtt_client, pd, value)
@@ -872,6 +869,7 @@ def main_setup_env():
     global MQTT_DECOMPOSE_PROPERTIES
     global MQTT_ENABLED
     global MQTT_HOST
+    global MQTT_MESSAGES
     global MQTT_PORT
     global MQTT_PROPERTIES
     global MQTT_PUBLISH_MESSAGES
@@ -898,6 +896,7 @@ def main_setup_env():
         os.environ.get('MQTT_DECOMPOSE_PROPERTIES', 'true'))
     MQTT_ENABLED = os.environ.get('MQTT_ENABLED', 'false')
     MQTT_HOST = os.environ.get('MQTT_HOST', '')
+    MQTT_MESSAGES = os.environ.get('MQTT_MESSAGES', '').split(sep=' ')
     MQTT_PORT = int(os.environ.get('MQTT_PORT', '1883'))
     MQTT_PROPERTIES = os.environ.get('MQTT_PROPERTIES', '').split(sep=' ')
     MQTT_PUBLISH_MESSAGES = os.environ.get('MQTT_PUBLISH_MESSAGES', 'false')
