@@ -507,7 +507,7 @@ properties:
         unit_of_measurement: A
   - key: cbm
     jsonType: unknown
-    example: None
+    example: null
   - key: cca
     alias: cloudClientAuth
     title: Cloud Client Auth
@@ -574,7 +574,7 @@ properties:
     alias: chargeControllerUpdateProgress
     title: Charge Controller Update Progress
     jsonType: object
-    example: None
+    example: null
     rw: R
     type: optional<object>
     category: Status
@@ -638,7 +638,7 @@ properties:
         jsonType: integer
   - key: cdv
     jsonType: unknown
-    example: None
+    example: null
   - key: cfi
     alias: colorFinished
     title: Color Finished
@@ -812,7 +812,7 @@ properties:
     alias: chargingEnergyLimit
     title: Charging Energy Limit
     jsonType: float
-    example: None
+    example: null
     rw: R/W
     type: optional<double>
     category: Config
@@ -917,7 +917,7 @@ properties:
     alias: espFlashInfo
     title: ESP Flash Info
     jsonType: object
-    example: None
+    example: null
     rw: R
     type: object
     category: Constant
@@ -1135,17 +1135,17 @@ properties:
     alias: ohmpilotState
     title: Ohmpilot State
     jsonType: unknown
-    example: None
+    example: null
   - key: fbuf_ohmpilotTemperature
     alias: ohmpilotTemperature
     title: Ohmpilot Temperature
     jsonType: unknown
-    example: None
+    example: null
   - key: fbuf_pAcTotal
     alias: powerAcTotal
     title: Power AC Total
     jsonType: unknown
-    example: None
+    example: null
   - key: fbuf_pAkku
     alias: powerAkku
     title: Power Akku
@@ -1226,7 +1226,7 @@ properties:
     alias: lockFeedbackAge
     title: Lock Feedback Age
     jsonType: integer
-    example: None
+    example: null
     rw: R
     type: optional<milliseconds>
     category: Status
@@ -1293,7 +1293,7 @@ properties:
     homeAssistant:
   - key: fntp
     jsonType: unknown
-    example: None
+    example: null
   - key: fot
     alias: ohmpilotTemperatureLimit
     title: Ohmpilot Temperature Limit
@@ -1379,7 +1379,7 @@ properties:
     example: false
   - key: ftls
     jsonType: unknown
-    example: None
+    example: null
   - key: ftt
     jsonType: integer
     example: 25200
@@ -1481,7 +1481,7 @@ properties:
     alias: inverterDataOverride
     title: Inverter Data Override
     jsonType: object
-    example: None
+    example: null
     rw: R
     type: optional<object>
     category: Config
@@ -1528,12 +1528,12 @@ properties:
     example: 0
   - key: lbh
     jsonType: unknown
-    example: None
+    example: null
   - key: lbp
     alias: lastButtonPress
     title: Last Button Press
     jsonType: integer
-    example: None
+    example: null
     rw: R
     type: milliseconds
     category: Status
@@ -1616,12 +1616,12 @@ properties:
     description: internal infos about currently running led animation
   - key: ledo
     jsonType: unknown
-    example: None
+    example: null
   - key: lfspt
     alias: lastForceSinglePhaseToggle
     title: Last Force Single Phase Toggle
     jsonType: integer
-    example: None
+    example: null
     rw: R
     type: optional<milliseconds>
     category: Status
@@ -1657,7 +1657,7 @@ properties:
     alias: loadBalancingAmpere
     title: Load Balancing Current
     jsonType: integer
-    example: None
+    example: null
     rw: R
     type: optional<uint8>
     category: Status
@@ -1705,7 +1705,7 @@ properties:
     alias: loadBalancingMembers
     title: Load Balancing Members
     jsonType: array
-    example: None
+    example: null
     rw: R
     type: array
     category: Status
@@ -1723,7 +1723,7 @@ properties:
     alias: loadBalancingStatus
     title: Load Balancing Status
     jsonType: string
-    example: None
+    example: null
     rw: R
     type: optional<string>
     category: Status
@@ -1765,13 +1765,13 @@ properties:
     description: last pv surplus calculation
   - key: lrc
     jsonType: unknown
-    example: None
+    example: null
   - key: lri
     jsonType: unknown
-    example: None
+    example: null
   - key: lrr
     jsonType: unknown
-    example: None
+    example: null
   - key: lse
     alias: ledSaveEnergy
     title: LED Save Energy
@@ -1785,7 +1785,7 @@ properties:
     alias: lastStaSwitchedFromConnected
     title: Last STA Switched From Connected
     jsonType: integer
-    example: None
+    example: null
     rw: R
     type: optional<milliseconds>
     category: Status
@@ -1846,7 +1846,7 @@ properties:
     alias: minChargePauseEndsAt
     title: Min Charge Pause End
     jsonType: integer
-    example: None
+    example: null
     rw: R/W
     type: optional<milliseconds>
     category: Status
@@ -2139,12 +2139,12 @@ properties:
       }
   - key: obm
     jsonType: unknown
-    example: None
+    example: null
   - key: oca
     alias: otaCloudApp
     title: OTA Cloud App
     jsonType: object
-    example: None
+    example: null
     rw: R
     type: optional<object>
     category: Status
@@ -2156,7 +2156,7 @@ properties:
     alias: otaCloudLength
     title: OTA Cloud Length
     jsonType: integer
-    example: None
+    example: null
     rw: R
     type: optional<int>
     category: Status
@@ -2184,7 +2184,7 @@ properties:
     example: false
   - key: ocppca
     jsonType: unknown
-    example: None
+    example: null
   - key: ocppe
     jsonType: boolean
     example: false
@@ -2529,7 +2529,7 @@ properties:
     alias: residualCurrentDetection
     title: Residual Current Detection
     jsonType: integer
-    example: None
+    example: null
     rw: R
     type: optional<microseconds>
     category: Status
@@ -2791,7 +2791,7 @@ properties:
     example: 2
   - key: smd
     jsonType: unknown
-    example: None
+    example: null
   - key: spl3
     alias: threePhaseSwitchLevel
     title: Three Phase Switch Level
@@ -2814,7 +2814,7 @@ properties:
       component: sensor
   - key: stao
     jsonType: unknown
-    example: None
+    example: null
   - key: su
     alias: simulateUnplugging
     title: Simulate Unplugging
@@ -2948,7 +2948,7 @@ properties:
     alias: transaction
     title: Transaction
     jsonType: integer
-    example: None
+    example: null
     rw: R/W
     type: optional<uint8>
     category: Status
@@ -3155,7 +3155,7 @@ properties:
     alias: wifiFailedMac
     title: WiFi Failed MAC Address
     jsonType: array
-    example: None
+    example: null
     rw: R
     type: array
     category: Status
