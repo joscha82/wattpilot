@@ -81,7 +81,7 @@
 | `deltap`<br>`deltaPower` | Delta Power | R | `float`<br>`float` | Status | :white_large_square: |  |  |
 | `dll`<br>- |  |  | `string`<br>- |  | :white_large_square: |  | `"https://data.wattpilot.io/export?e=<some_token>"` |
 | `dns`<br>`dnsServer` | DNS Server | R | `object`<br>`object` | Status | :white_large_square: | DNS server | `{"dns": "0.0.0.0"}` |
-| `dwo`<br>`chargingEnergyLimit` | Charging Energy Limit | R/W | `float`<br>`optional<double>` | Config | :white_large_square: | charging energy limit, measured in Wh, null means disabled, not the next trip energy | `"None"` |
+| `dwo`<br>`chargingEnergyLimit` | Charging Energy Limit | R/W | `float`<br>`optional<double>` | Config | :heavy_check_mark: | charging energy limit, measured in Wh, null means disabled, not the next trip energy | `"None"` |
 | `ecf`<br>`espCpuFreq` | ESP CPU Frequency | R | `object`<br>`object` | Constant | :white_large_square: | ESP CPU freq (source: XTAL=0, PLL=1, 8M=2, APLL=3) | `{"source": 1, "source_freq_mhz": 320, "div": 2, "freq_mhz": 160}` |
 | `eci`<br>`espChipInfo` | ESP Chip Info | R | `object`<br>`object` | Constant | :white_large_square: | ESP chip info (model: ESP32=1, ESP32S2=2, ESP32S3=4, ESP32C3=5; features: EMB_FLASH=bit0, WIFI_BGN=bit1, BLE=bit4, BT=bit5) | `{"model": 1, "features": 50, "cores": 2, "revision": 3}` |
 | `efh`<br>`espFreeHeap` | ESP Free Heap | R | `integer`<br>`size_t` | Status | :white_large_square: | ESP free heap | `125920` |
