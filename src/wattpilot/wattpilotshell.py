@@ -285,23 +285,37 @@ Home Assistant commands:
             print(f"ERROR: Unsupported argument: {args[0]}")
 
     def _ha_prop_cmds(self, cmd, prop_name):
+        global HA_PROPERTIES
+        global MQTT_PROPERTIES
         global mqtt_client
         global wp
         global wpdef
         if prop_name not in wpdef["properties"]:
             print(f"ERROR: Unknown property '{prop_name}!")
         elif cmd == "enable":
+            if prop_name not in MQTT_PROPERTIES:
+                MQTT_PROPERTIES.append(prop_name)
             ha_discover_property(
-                wp, mqtt_client, wpdef["properties"][prop_name], False, True)
+                wp, mqtt_client, wpdef["properties"][prop_name], disable_discovery=False, force_enablement=True)
         elif cmd == "disable":
+            if prop_name in MQTT_PROPERTIES:
+                MQTT_PROPERTIES.remove(prop_name)
             ha_discover_property(
-                wp, mqtt_client, wpdef["properties"][prop_name], False, False)
+                wp, mqtt_client, wpdef["properties"][prop_name], disable_discovery=False, force_enablement=False)
         elif cmd == "discover":
+            if prop_name not in HA_PROPERTIES:
+                HA_PROPERTIES.append(prop_name)
+            if prop_name not in MQTT_PROPERTIES:
+                MQTT_PROPERTIES.append(prop_name)
             ha_discover_property(
-                wp, mqtt_client, wpdef["properties"][prop_name], False)
+                wp, mqtt_client, wpdef["properties"][prop_name], disable_discovery=False, force_enablement=True)
         elif cmd == "undiscover":
+            if prop_name in HA_PROPERTIES:
+                HA_PROPERTIES.remove(prop_name)
+            if prop_name in MQTT_PROPERTIES:
+                MQTT_PROPERTIES.remove(prop_name)
             ha_discover_property(
-                wp, mqtt_client, wpdef["properties"][prop_name], True)
+                wp, mqtt_client, wpdef["properties"][prop_name], disable_discovery=True, force_enablement=False)
 
     def complete_ha(self, text, line, begidx, endidx):
         token = line.split(' ')
@@ -963,6 +977,15 @@ def ha_discover_property(wp, mqtt_client, pd, disable_discovery=False, force_ena
                                  disable_discovery, force_enablement)
 
 
+def ha_is_default_prop(pd):
+    global HA_DISABLED_ENTITIES
+    v = "homeAssistant" in pd
+    if HA_DISABLED_ENTITIES != 'true':
+        ha = pd.get("homeAssistant", {}) if pd.get("homeAssistant", {}) else {}
+        v = v and ha.get("config", {}).get("enabled_by_default", True)
+    return v
+
+
 def ha_get_discovery_properties():
     global HA_PROPERTIES
     global wpdef
@@ -971,7 +994,7 @@ def ha_get_discovery_properties():
     ha_properties = HA_PROPERTIES
     if ha_properties == [''] or ha_properties == []:
         ha_properties = [p["key"]
-                         for p in wpdef["properties"].values() if "homeAssistant" in p]
+                         for p in wpdef["properties"].values() if ha_is_default_prop(p)]
     _LOGGER.debug(
         f"get_ha_discovery_properties(): ha_properties='{ha_properties}'")
     return ha_properties
@@ -1034,6 +1057,7 @@ def ha_stop(mqtt_client):
 #### Main Program ####
 
 def main_setup_env():
+    global HA_DISABLED_ENTITIES
     global HA_ENABLED
     global HA_PROPERTIES
     global HA_TOPIC_CONFIG
@@ -1062,6 +1086,7 @@ def main_setup_env():
     global WATTPILOT_INIT_TIMEOUT
     global WATTPILOT_PASSWORD
     global WATTPILOT_SPLIT_PROPERTIES
+    HA_DISABLED_ENTITIES = os.environ.get('HA_DISABLED_ENTITIES', 'false')
     HA_ENABLED = os.environ.get('HA_ENABLED', 'false')
     HA_PROPERTIES = os.environ.get('HA_PROPERTIES', '').split(sep=' ')
     HA_TOPIC_CONFIG = os.environ.get(
