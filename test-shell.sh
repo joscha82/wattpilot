@@ -97,6 +97,21 @@ case "${cmd}" in
                 echo "\`\`\`"
             done
         ) >ShellCommands.md
+        (
+            # NOTE: The file cannot yet fully replace the table in README.md since the description is missing
+            echo "# Wattpilot Shell Environment Variables"
+            echo ""
+            echo "| Environment Variable | Default Value |"
+            echo "|----------------------|---------------|"
+            cat src/wattpilot/wattpilotshell.py \
+            | awk 'BEGIN {p=0} /^ +/ {if(p) print $0} /^def / {p=0} /^def main_setup_env\(\):/ {p=1}' \
+            | grep -E -v '\b(global|assert)\b' \
+            | sed -re 's/#.*//g;s/\n//g' \
+            | tr '\n' ' ' \
+            | sed -re "s/os\\.environ\\.get\\(\\s*'([A-Z_]+)'\\s*,\\s*'([^']*)'\\s*\\)/\n| \`\1\` | \`\2\` |\n/g; s/\`\`//g" \
+            | grep -E '^\|' \
+            | sort
+        ) >ShellEnvVariables.md
     ;;
     *)
         echo "Unknown command: ${cmd}"

@@ -688,13 +688,15 @@ def mqtt_subst_topic(s, values, expand=True):
     return s.format(**all_values)
 
 
-def mqtt_setup_client(host, port, client_id, command_topic):
+def mqtt_setup_client(host, port, client_id, available_topic, command_topic):
     # Connect to MQTT server:
     mqtt_client = mqtt.Client(client_id)
     mqtt_client.on_message = mqtt_set_value
     _LOGGER.info(f"Connecting to MQTT host {host} on port {port} ...")
+    mqtt_client.will_set(available_topic, payload="offline", qos=0, retain=True)
     mqtt_client.connect(host, port)
     mqtt_client.loop_start()
+    mqtt_client.publish(available_topic, payload="online", qos=0, retain=True)
     _LOGGER.info(f"Subscribing to command topics {command_topic}")
     mqtt_client.subscribe(command_topic)
     return mqtt_client
@@ -705,10 +707,13 @@ def mqtt_setup(wp):
     global MQTT_HOST
     global MQTT_PORT
     global MQTT_PROPERTIES
+    global MQTT_TOPIC_AVAILABLE
     global MQTT_TOPIC_PROPERTY_SET
     # Connect to MQTT server:
-    mqtt_client = mqtt_setup_client(MQTT_HOST, MQTT_PORT, MQTT_CLIENT_ID, mqtt_subst_topic(
-        MQTT_TOPIC_PROPERTY_SET, {"propName": "+"}))
+    mqtt_client = mqtt_setup_client(MQTT_HOST, MQTT_PORT, MQTT_CLIENT_ID, 
+        mqtt_subst_topic(MQTT_TOPIC_AVAILABLE, {}),
+        mqtt_subst_topic(MQTT_TOPIC_PROPERTY_SET, {"propName": "+"}),
+    )
     MQTT_PROPERTIES = mqtt_get_watched_properties(wp)
     _LOGGER.info(
         f"Registering message callback to publish updates to the following properties to MQTT: {MQTT_PROPERTIES}")
@@ -851,6 +856,9 @@ def ha_discover_property(wp, mqtt_client, pd, disable_discovery=False, force_ena
         "object_id": object_id,
         "unique_id": unique_id,
         "state_topic": mqtt_subst_topic(MQTT_TOPIC_PROPERTY_STATE, topic_subst_map, False),
+        "availability_topic": mqtt_subst_topic(MQTT_TOPIC_AVAILABLE, {}),
+        "payload_available": "online",
+        "payload_not_available": "offline",
         "device": ha_device,
     }
     if "valueMap" in pd:
@@ -958,15 +966,18 @@ def main_setup_env():
     global HA_TOPIC_CONFIG
     global HA_WAIT_INIT_S
     global HA_WAIT_PROPS_MS
+    global MQTT_AVAILABLE_PAYLOAD
     global MQTT_CLIENT_ID
     global MQTT_DECOMPOSE_PROPERTIES
     global MQTT_ENABLED
     global MQTT_HOST
     global MQTT_MESSAGES
+    global MQTT_NOT_AVAILABLE_PAYLOAD
     global MQTT_PORT
     global MQTT_PROPERTIES
     global MQTT_PUBLISH_MESSAGES
     global MQTT_PUBLISH_PROPERTIES
+    global MQTT_TOPIC_AVAILABLE
     global MQTT_TOPIC_BASE
     global MQTT_TOPIC_MESSAGES
     global MQTT_TOPIC_PROPERTY_BASE
@@ -984,16 +995,20 @@ def main_setup_env():
         'HA_TOPIC_CONFIG', 'homeassistant/{component}/{uniqueId}/config')
     HA_WAIT_INIT_S = int(os.environ.get('HA_WAIT_INIT_S', '0'))
     HA_WAIT_PROPS_MS = int(os.environ.get('HA_WAIT_PROPS_MS', '0'))
+    MQTT_AVAILABLE_PAYLOAD = os.environ.get('MQTT_AVAILABLE_PAYLOAD', 'online')
     MQTT_CLIENT_ID = os.environ.get('MQTT_CLIENT_ID', 'wattpilot2mqtt')
     MQTT_DECOMPOSE_PROPERTIES = bool(
         os.environ.get('MQTT_DECOMPOSE_PROPERTIES', 'true'))
     MQTT_ENABLED = os.environ.get('MQTT_ENABLED', 'false')
     MQTT_HOST = os.environ.get('MQTT_HOST', '')
     MQTT_MESSAGES = os.environ.get('MQTT_MESSAGES', '').split(sep=' ')
+    MQTT_NOT_AVAILABLE_PAYLOAD = os.environ.get('MQTT_NOT_AVAILABLE_PAYLOAD', 'offline')
     MQTT_PORT = int(os.environ.get('MQTT_PORT', '1883'))
     MQTT_PROPERTIES = os.environ.get('MQTT_PROPERTIES', '').split(sep=' ')
     MQTT_PUBLISH_MESSAGES = os.environ.get('MQTT_PUBLISH_MESSAGES', 'false')
     MQTT_PUBLISH_PROPERTIES = os.environ.get('MQTT_PUBLISH_PROPERTIES', 'true')
+    MQTT_TOPIC_AVAILABLE = os.environ.get(
+        'MQTT_TOPIC_AVAILABLE', '{baseTopic}/available')
     MQTT_TOPIC_BASE = os.environ.get('MQTT_TOPIC_BASE', 'wattpilot')
     MQTT_TOPIC_MESSAGES = os.environ.get(
         'MQTT_TOPIC_MESSAGES', '{baseTopic}/messages/{messageType}')
