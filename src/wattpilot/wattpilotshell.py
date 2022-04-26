@@ -982,8 +982,8 @@ def main_setup_env():
     HA_PROPERTIES = os.environ.get('HA_PROPERTIES', '').split(sep=' ')
     HA_TOPIC_CONFIG = os.environ.get(
         'HA_TOPIC_CONFIG', 'homeassistant/{component}/{uniqueId}/config')
-    HA_WAIT_INIT_S = int(os.environ.get('HA_WAIT_INIT_S', '5'))
-    HA_WAIT_PROPS_MS = int(os.environ.get('HA_WAIT_PROPS_MS', '50'))
+    HA_WAIT_INIT_S = int(os.environ.get('HA_WAIT_INIT_S', '0'))
+    HA_WAIT_PROPS_MS = int(os.environ.get('HA_WAIT_PROPS_MS', '0'))
     MQTT_CLIENT_ID = os.environ.get('MQTT_CLIENT_ID', 'wattpilot2mqtt')
     MQTT_DECOMPOSE_PROPERTIES = bool(
         os.environ.get('MQTT_DECOMPOSE_PROPERTIES', 'true'))
