@@ -49,16 +49,16 @@
 | `car`<br>`carState` | Car State | R | `integer`<br>`optional<uint8>` | Status | :heavy_check_mark: | carState, null if internal error (Unknown/Error=0, Idle=1, Charging=2, WaitCar=3, Complete=4, Error=5) | `1` |
 | `cards`<br>`registeredCards` | Registered Cards | R/W | `array`<br>`array` |  | :white_large_square: | Registered RFID cards for different users | `[{"name": "User 1", "energy": 0, "cardId": true}, {"name": "User 2", "energy": 0, "cardId": false}]` |
 | `cbl`<br>`cableCurrentLimit` | Cable Current Limit | R | `integer`<br>`optional<int>` | Status | :heavy_check_mark: | cable_current_limit in A | `20` |
-| `cbm`<br>- |  |  | `unknown`<br>- |  | :white_large_square: |  | `"None"` |
+| `cbm`<br>- |  |  | `unknown`<br>- |  | :white_large_square: |  | `null` |
 | `cca`<br>`cloudClientAuth` | Cloud Client Auth | R | `boolean`<br>`bool` | Config | :white_large_square: | cloud websocket use client auth (if key&cert are setup correctly) | `true` |
 | `cch`<br>`colorCharging` | Color Charging | R/W | `string`<br>`string` | Config | :heavy_check_mark: | color_charging, format: #RRGGBB | `"#00FFF"` |
 | `cci`<br>- |  |  | `object`<br>- |  | :white_large_square: |  | `{"id": "<some_numeric_id>", "paired": true, "deviceFamily": "DataManager", "label": "<some_name>", "model": "PILOT", "commonName": "pilot-0.5e-<some_id>", "ip": "<some_ip>", "connected": true, "reachableMdns": true, "reachableUdp": true, "reachableHttp": true, "status": 0, "message": "ok"}` |
 | `cco`<br>`carConsumption` | Car Consumption | R/W | `float`<br>`double` | Config | :heavy_check_mark: | car consumption in kWh for 100km (only stored for app) | `24` |
 | `ccrv`<br>`chargeControllerRecommendedVersion` | Charge Controller Recommended Version | R | `string`<br>`string` | Constant | :white_large_square: |  |  |
-| `ccu`<br>`chargeControllerUpdateProgress` | Charge Controller Update Progress | R | `object`<br>`optional<object>` | Status | :white_large_square: | charge controller update progress (null if no update is in progress) | `"None"` |
+| `ccu`<br>`chargeControllerUpdateProgress` | Charge Controller Update Progress | R | `object`<br>`optional<object>` | Status | :white_large_square: | charge controller update progress (null if no update is in progress) | `null` |
 | `ccw`<br>`currentlyConnectedWifi` | Currently Connected Wifi | R | `object`<br>`optional<object>` | Status | :white_large_square: | Currently connected WiFi | `{"ssid": "<SOME_SSID>", "encryptionType": 3, "pairwiseCipher": 4, "groupCipher": 4, "b": true, "g": true, "n": true, "lr": false, "wps": false, "ftmResponder": false, "ftmInitiator": false, "channel": 6, "bssid": "<SOME_BSSID>", "ip": "<some_ip4>", "netmask": "255.255.255.0", "gw": "<some_ip4>", "ipv6": ["<some_ip6>", "<some_ip6>"], "dns0": "<some_ip4>", "dns1": "0.0.0.0", "dns2": "0.0.0.0"}` |
 | `cdi`<br>`chargingDurationInfo` | Charging Duration Info | R | `object`<br>`object` | Status | :heavy_check_mark: | charging duration info (null=no charging in progress, type=0 counter going up, type=1 duration in ms) | `{"type": 1, "value": 11554770}` |
-| `cdv`<br>- |  |  | `unknown`<br>- |  | :white_large_square: |  | `"None"` |
+| `cdv`<br>- |  |  | `unknown`<br>- |  | :white_large_square: |  | `null` |
 | `cfi`<br>`colorFinished` | Color Finished | R/W | `string`<br>`string` | Config | :white_large_square: | color_finished, format: #RRGGBB | `"#00FF00"` |
 | `chr`<br>- |  |  | `boolean`<br>- |  | :white_large_square: |  | `true` |
 | `cid`<br>`colorIdle` | Color Idle | R/W | `string`<br>`string` | Config | :white_large_square: | color_idle, format: #RRGGBB | `"#0000FF"` |
@@ -81,13 +81,13 @@
 | `deltap`<br>`deltaPower` | Delta Power | R | `float`<br>`float` | Status | :white_large_square: |  |  |
 | `dll`<br>- |  |  | `string`<br>- |  | :white_large_square: |  | `"https://data.wattpilot.io/export?e=<some_token>"` |
 | `dns`<br>`dnsServer` | DNS Server | R | `object`<br>`object` | Status | :white_large_square: | DNS server | `{"dns": "0.0.0.0"}` |
-| `dwo`<br>`chargingEnergyLimit` | Charging Energy Limit | R/W | `float`<br>`optional<double>` | Config | :heavy_check_mark: | charging energy limit, measured in Wh, null means disabled, not the next trip energy | `"None"` |
+| `dwo`<br>`chargingEnergyLimit` | Charging Energy Limit | R/W | `float`<br>`optional<double>` | Config | :heavy_check_mark: | charging energy limit, measured in Wh, null means disabled, not the next trip energy | `null` |
 | `ecf`<br>`espCpuFreq` | ESP CPU Frequency | R | `object`<br>`object` | Constant | :white_large_square: | ESP CPU freq (source: XTAL=0, PLL=1, 8M=2, APLL=3) | `{"source": 1, "source_freq_mhz": 320, "div": 2, "freq_mhz": 160}` |
 | `eci`<br>`espChipInfo` | ESP Chip Info | R | `object`<br>`object` | Constant | :white_large_square: | ESP chip info (model: ESP32=1, ESP32S2=2, ESP32S3=4, ESP32C3=5; features: EMB_FLASH=bit0, WIFI_BGN=bit1, BLE=bit4, BT=bit5) | `{"model": 1, "features": 50, "cores": 2, "revision": 3}` |
 | `efh`<br>`espFreeHeap` | ESP Free Heap | R | `integer`<br>`size_t` | Status | :white_large_square: | ESP free heap | `125920` |
 | `efh32`<br>`espFreeHeap32` | ESP Free Heap 32 | R | `integer`<br>`size_t` | Status | :white_large_square: | ESP free heap 32bit aligned | `125920` |
 | `efh8`<br>`espFreeHeap8` | ESP Free Heap 8 | R | `integer`<br>`size_t` | Status | :white_large_square: | ESP free heap 8bit aligned | `86848` |
-| `efi`<br>`espFlashInfo` | ESP Flash Info | R | `object`<br>`object` | Constant | :white_large_square: | ESP Flash info (spi_mode: QIO=0, QOUT=1, DIO=2, DOUT=3, FAST_READ=4, SLOW_READ=5; spi_speed: 40M=0, 26M=1, 20M=2, 80M=15; spi_size: 1MB=0, 2MB=1, 4MB=2, 8MB=3, 16MB=4, MAX=5) | `"None"` |
+| `efi`<br>`espFlashInfo` | ESP Flash Info | R | `object`<br>`object` | Constant | :white_large_square: | ESP Flash info (spi_mode: QIO=0, QOUT=1, DIO=2, DOUT=3, FAST_READ=4, SLOW_READ=5; spi_speed: 40M=0, 26M=1, 20M=2, 80M=15; spi_size: 1MB=0, 2MB=1, 4MB=2, 8MB=3, 16MB=4, MAX=5) | `null` |
 | `ehs`<br>`espHeapSize` | ESP Heap Size | R | `integer`<br>`size_t` | Status | :white_large_square: | ESP heap size | `282800` |
 | `emfh`<br>`espMinFreeHeap` | ESP Min Free Heap | R | `integer`<br>`size_t` | Status | :white_large_square: | ESP minimum free heap since boot | `78104` |
 | `emhb`<br>`espMaxHeap` | ESP Max Heap | R | `integer`<br>`size_t` | Status | :white_large_square: | ESP max size of allocated heap block since boot | `67572` |
@@ -103,9 +103,9 @@
 | `fbuf_age`<br>`fbufAge` | Fronius Age |  | `integer`<br>- |  | :white_large_square: |  | `93639347` |
 | `fbuf_akkuMode`<br>`akkuMode` | Battery Mode |  | `integer`<br>- |  | :white_large_square: |  | `1` |
 | `fbuf_akkuSOC`<br>`akkuSoc` | Battery SoC |  | `float`<br>- |  | :heavy_check_mark: | State of charge of the PV battery | `72.5` |
-| `fbuf_ohmpilotState`<br>`ohmpilotState` | Ohmpilot State |  | `unknown`<br>- |  | :white_large_square: |  | `"None"` |
-| `fbuf_ohmpilotTemperature`<br>`ohmpilotTemperature` | Ohmpilot Temperature |  | `unknown`<br>- |  | :white_large_square: |  | `"None"` |
-| `fbuf_pAcTotal`<br>`powerAcTotal` | Power AC Total |  | `unknown`<br>- |  | :white_large_square: |  | `"None"` |
+| `fbuf_ohmpilotState`<br>`ohmpilotState` | Ohmpilot State |  | `unknown`<br>- |  | :white_large_square: |  | `null` |
+| `fbuf_ohmpilotTemperature`<br>`ohmpilotTemperature` | Ohmpilot Temperature |  | `unknown`<br>- |  | :white_large_square: |  | `null` |
+| `fbuf_pAcTotal`<br>`powerAcTotal` | Power AC Total |  | `unknown`<br>- |  | :white_large_square: |  | `null` |
 | `fbuf_pAkku`<br>`powerAkku` | Power Akku |  | `float`<br>- |  | :heavy_check_mark: | Power that is consumed from the PV battery (or delivered into the battery, if negative) | `-3985.899` |
 | `fbuf_pGrid`<br>`powerGrid` | Power Grid |  | `integer`<br>- |  | :heavy_check_mark: | Power consumed from grid (or delivered to grid, if negative) | `11` |
 | `fbuf_pPv`<br>`powerPv` | Power PV |  | `float`<br>- |  | :heavy_check_mark: | PV power that is produced | `4701.407` |
@@ -114,7 +114,7 @@
 | `fem`<br>`flashEncryptionMode` | Flash Encryption Mode | R | `integer`<br>`uint8` | Constant | :white_large_square: | Flash Encryption Mode (Disabled=0, Development=1, Release=2) | `2` |
 | `ferm`<br>`effectiveRoundingMode` | Effective Rounding Mode | R | `integer`<br>`uint8` | Status | :white_large_square: | effectiveRoundingMode | `1` |
 | `ffb`<br>`lockFeedback` | Lock Feedback | R | `integer`<br>`uint8` | Status | :heavy_check_mark: | lock feedback (NoProblem=0, ProblemLock=1, ProblemUnlock=2) | `0` |
-| `ffba`<br>`lockFeedbackAge` | Lock Feedback Age | R | `integer`<br>`optional<milliseconds>` | Status | :white_large_square: | lock feedback (age) | `"None"` |
+| `ffba`<br>`lockFeedbackAge` | Lock Feedback Age | R | `integer`<br>`optional<milliseconds>` | Status | :white_large_square: | lock feedback (age) | `null` |
 | `ffna`<br>`factoryFriendlyName` | Factory Friendly Name | R | `string`<br>`string` | Constant | :white_large_square: | factoryFriendlyName | `"Wattpilot_<some_serialnr>"` |
 | `fhi`<br>- |  |  | `boolean`<br>- |  | :white_large_square: |  | `true` |
 | `fhz`<br>`frequency` | Frequency | R | `float`<br>`optional<float>` | Status | :heavy_check_mark: | Power grid frequency (~50Hz) or 0 if unknown | `49.815` |
@@ -125,7 +125,7 @@
 | `fmmp`<br>- |  |  | `integer`<br>- |  | :white_large_square: |  | `0` |
 | `fmt`<br>`minChargeTime` | Min Charge Time | R/W | `integer`<br>`milliseconds` | Config | :white_large_square: | minChargeTime in milliseconds | `900000` |
 | `fna`<br>`friendlyName` | Friendly Name | R/W | `string`<br>`string` | Config | :heavy_check_mark: | friendlyName | `"<some_name>"` |
-| `fntp`<br>- |  |  | `unknown`<br>- |  | :white_large_square: |  | `"None"` |
+| `fntp`<br>- |  |  | `unknown`<br>- |  | :white_large_square: |  | `null` |
 | `fot`<br>`ohmpilotTemperatureLimit` | Ohmpilot Temperature Limit |  | `integer`<br>- |  | :heavy_check_mark: |  | `20` |
 | `frc`<br>`forceState` | Force State | R/W | `integer`<br>`uint8` | Config | :heavy_check_mark: | forceState (Neutral=0, Off=1, On=2) | `0` |
 | `frci`<br>- |  |  | `boolean`<br>- |  | :white_large_square: |  | `true` |
@@ -136,7 +136,7 @@
 | `fst`<br>`startingPower` | Starting Power | R/W | `float`<br>`float` | Config | :heavy_check_mark: | startingPower in watts. This is the minimum power at which charging can be started. | `1400` |
 | `fte`<br>- |  |  | `integer`<br>- |  | :white_large_square: |  | `50000` |
 | `ftlf`<br>- |  |  | `boolean`<br>- |  | :white_large_square: |  | `false` |
-| `ftls`<br>- |  |  | `unknown`<br>- |  | :white_large_square: |  | `"None"` |
+| `ftls`<br>- |  |  | `unknown`<br>- |  | :white_large_square: |  | `null` |
 | `ftt`<br>- |  |  | `integer`<br>- |  | :white_large_square: |  | `25200` |
 | `ful`<br>`useDynamicPricing` | useDynamicPricing |  | `boolean`<br>- |  | :white_large_square: | Uses dynamic electricity pricing (Lumina, aWattar) | `false` |
 | `fup`<br>`usePvSurplus` | PV Surplus | R/W | `boolean`<br>`bool` | Config | :white_large_square: | Use PV surplus charging | `true` |
@@ -151,7 +151,7 @@
 | `hsta`<br>- |  |  | `string`<br>- |  | :white_large_square: |  | `"Wattpilot_<some_serialnr>"` |
 | `hsts`<br>- |  |  | `string`<br>- |  | :white_large_square: |  | `"Wattpilot_<some_serialnr>"` |
 | `hws`<br>`httpStaReachable` | HTTP STA Reachable | R/W | `boolean`<br>`bool` | Config | :white_large_square: | httpStaReachable, defines if the local webserver should be reachable from the customers WiFi | `true` |
-| `ido`<br>`inverterDataOverride` | Inverter Data Override | R | `object`<br>`optional<object>` | Config | :white_large_square: | Inverter data override | `"None"` |
+| `ido`<br>`inverterDataOverride` | Inverter Data Override | R | `object`<br>`optional<object>` | Config | :white_large_square: | Inverter data override | `null` |
 | `imd`<br>- |  |  | `boolean`<br>- |  | :white_large_square: |  | `false` |
 | `imi`<br>- |  |  | `integer`<br>- |  | :white_large_square: |  | `0` |
 | `immr`<br>- |  |  | `integer`<br>- |  | :white_large_square: |  | `20` |
@@ -163,8 +163,8 @@
 | `isml`<br>- |  |  | `boolean`<br>- |  | :white_large_square: |  | `false` |
 | `iuse`<br>- |  |  | `boolean`<br>- |  | :white_large_square: |  | `true` |
 | `las`<br>- |  |  | `integer`<br>- |  | :white_large_square: |  | `0` |
-| `lbh`<br>- |  |  | `unknown`<br>- |  | :white_large_square: |  | `"None"` |
-| `lbp`<br>`lastButtonPress` | Last Button Press | R | `integer`<br>`milliseconds` | Status | :white_large_square: | lastButtonPress in milliseconds | `"None"` |
+| `lbh`<br>- |  |  | `unknown`<br>- |  | :white_large_square: |  | `null` |
+| `lbp`<br>`lastButtonPress` | Last Button Press | R | `integer`<br>`milliseconds` | Status | :white_large_square: | lastButtonPress in milliseconds | `null` |
 | `lbr`<br>`ledBrightness` | LED Brightness | R/W | `integer`<br>`uint8` | Config | :white_large_square: | led_bright, 0-255 | `255` |
 | `lbs`<br>- |  |  | `integer`<br>- |  | :white_large_square: |  | `806` |
 | `lccfc`<br>`lastCarStateChangedFromCharging` | Last Car State Changed From Charging | R | `integer`<br>`optional<milliseconds>` | Status | :white_large_square: | lastCarStateChangedFromCharging (in ms) | `7157569` |
@@ -173,29 +173,29 @@
 | `lch`<br>- |  |  | `integer`<br>- |  | :white_large_square: |  | `5369660` |
 | `lck`<br>`effectiveLockSetting` | Effective Lock Setting | R | `integer`<br>`uint8` | Status | :heavy_check_mark: | Effective lock setting, as sent to Charge Ctrl (Normal=0, AutoUnlock=1, AlwaysLock=2, ForceUnlock=3) | `0` |
 | `led`<br>`ledInfo` | LED Info | R | `object`<br>`object` | Status | :white_large_square: | internal infos about currently running led animation | `{"id": 5, "name": "Finished", "norwayOverlay": true, "modeOverlay": true, "subtype": "renderCmds", "ranges": [{"from": 0, "to": 31, "colors": ["#00FF00"]}]}` |
-| `ledo`<br>- |  |  | `unknown`<br>- |  | :white_large_square: |  | `"None"` |
-| `lfspt`<br>`lastForceSinglePhaseToggle` | Last Force Single Phase Toggle | R | `integer`<br>`optional<milliseconds>` | Status | :white_large_square: | last force single phase toggle | `"None"` |
+| `ledo`<br>- |  |  | `unknown`<br>- |  | :white_large_square: |  | `null` |
+| `lfspt`<br>`lastForceSinglePhaseToggle` | Last Force Single Phase Toggle | R | `integer`<br>`optional<milliseconds>` | Status | :white_large_square: | last force single phase toggle | `null` |
 | `llr`<br>- |  |  | `integer`<br>- |  | :white_large_square: |  | `2` |
 | `lmo`<br>`logicMode` | Logic Mode | R/W | `integer`<br>`uint8` | Config | :heavy_check_mark: | logic mode (Default=3, Awattar=4, AutomaticStop=5) | `3` |
 | `lmsc`<br>`lastModelStatusChange` | Last Model Status Change | R | `integer`<br>`milliseconds` | Status | :white_large_square: | last model status change | `28822622` |
-| `loa`<br>`loadBalancingAmpere` | Load Balancing Current | R | `integer`<br>`optional<uint8>` | Status | :white_large_square: | load balancing ampere | `"None"` |
+| `loa`<br>`loadBalancingAmpere` | Load Balancing Current | R | `integer`<br>`optional<uint8>` | Status | :white_large_square: | load balancing ampere | `null` |
 | `loc`<br>`localTime` | Local Time | R | `string`<br>`string` | Status | :white_large_square: | local time | `"2022-03-06T11:59:38.182.123 +01:00"` |
 | `loe`<br>`loadBalancingEnabled` | Load Balancing Enabled | R/W | `boolean`<br>`bool` | Config | :white_large_square: | Load balancing enabled | `false` |
 | `lof`<br>`loadFallback` | Load Fallback | R/W | `integer`<br>`uint8` | Config | :white_large_square: | load_fallback | `0` |
 | `log`<br>`loadGroupId` | Load Group ID | R/W | `string`<br>`string` | Config | :white_large_square: | load_group_id | `""` |
 | `loi`<br>- |  |  | `boolean`<br>- |  | :white_large_square: |  | `false` |
-| `lom`<br>`loadBalancingMembers` | Load Balancing Members | R | `array`<br>`array` | Status | :white_large_square: | load balancing members | `"None"` |
+| `lom`<br>`loadBalancingMembers` | Load Balancing Members | R | `array`<br>`array` | Status | :white_large_square: | load balancing members | `null` |
 | `lop`<br>`loadPriority` | Load Priority | R/W | `integer`<br>`uint16` | Config | :white_large_square: | load_priority | `50` |
-| `los`<br>`loadBalancingStatus` | Load Balancing Status | R | `string`<br>`optional<string>` | Status | :white_large_square: | load balancing status | `"None"` |
+| `los`<br>`loadBalancingStatus` | Load Balancing Status | R | `string`<br>`optional<string>` | Status | :white_large_square: | load balancing status | `null` |
 | `lot`<br>`loadBalancingTotalAmpere` | Load Balancing Current Total | R/W | `integer`<br>`uint32` | Config | :white_large_square: | load balancing total amp | `32` |
 | `loty`<br>`loadBalancingType` | Load Balancing Type | R/W | `integer`<br>`uint8` | Config | :heavy_check_mark: | load balancing type (Static=0, Dynamic=1) | `0` |
 | `lps`<br>- |  |  | `integer`<br>- |  | :white_large_square: |  | `63` |
 | `lpsc`<br>`lastPvSurplusCalculation` | Last PV Surplus Calculation | R | `integer`<br>`milliseconds` | Status | :white_large_square: | last pv surplus calculation | `28771782` |
-| `lrc`<br>- |  |  | `unknown`<br>- |  | :white_large_square: |  | `"None"` |
-| `lri`<br>- |  |  | `unknown`<br>- |  | :white_large_square: |  | `"None"` |
-| `lrr`<br>- |  |  | `unknown`<br>- |  | :white_large_square: |  | `"None"` |
+| `lrc`<br>- |  |  | `unknown`<br>- |  | :white_large_square: |  | `null` |
+| `lri`<br>- |  |  | `unknown`<br>- |  | :white_large_square: |  | `null` |
+| `lrr`<br>- |  |  | `unknown`<br>- |  | :white_large_square: |  | `null` |
 | `lse`<br>`ledSaveEnergy` | LED Save Energy | R/W | `boolean`<br>`bool` | Config | :white_large_square: | led_save_energy | `false` |
-| `lssfc`<br>`lastStaSwitchedFromConnected` | Last STA Switched From Connected | R | `integer`<br>`optional<milliseconds>` | Status | :white_large_square: | lastStaSwitchedFromConnected (in milliseconds) | `"None"` |
+| `lssfc`<br>`lastStaSwitchedFromConnected` | Last STA Switched From Connected | R | `integer`<br>`optional<milliseconds>` | Status | :white_large_square: | lastStaSwitchedFromConnected (in milliseconds) | `null` |
 | `lsstc`<br>`lastStaSwitchedToConnected` | Last STA Switched To Connected | R | `integer`<br>`optional<milliseconds>` | Status | :white_large_square: | lastStaSwitchedToConnected (in milliseconds) | `7970` |
 | `maca`<br>- |  |  | `string`<br>- |  | :white_large_square: |  | `"<some_mac>"` |
 | `macs`<br>- |  |  | `string`<br>- |  | :white_large_square: |  | `"<some_mac>"` |
@@ -203,7 +203,7 @@
 | `mca`<br>`minChargingCurrent` | Min Charging Current | R/W | `integer`<br>`uint8` | Config | :white_large_square: | minChargingCurrent | `6` |
 | `mci`<br>`minimumChargingInterval` | Minimum Charging Interval | R/W | `integer`<br>`milliseconds` | Config | :white_large_square: | minimumChargingInterval in milliseconds (0 means disabled) | `0` |
 | `mcpd`<br>`minChargePauseDuration` | Min Charge Pause Duration | R/W | `integer`<br>`milliseconds` | Config | :white_large_square: | minChargePauseDuration in milliseconds (0 means disabled) | `0` |
-| `mcpea`<br>`minChargePauseEndsAt` | Min Charge Pause End | R/W | `integer`<br>`optional<milliseconds>` | Status | :white_large_square: | minChargePauseEndsAt (set to null to abort current minChargePauseDuration) | `"None"` |
+| `mcpea`<br>`minChargePauseEndsAt` | Min Charge Pause End | R/W | `integer`<br>`optional<milliseconds>` | Status | :white_large_square: | minChargePauseEndsAt (set to null to abort current minChargePauseDuration) | `null` |
 | `mod`<br>`moduleHwPcbVersion` | Module HW PCB Version | R | `integer`<br>`uint8` | Constant | :white_large_square: | Module hardware pcb version (0, 1, ...) | `1` |
 | `modelStatus`<br>`modelStatus` | Model Status | R | `integer`<br>`uint8` | Status | :heavy_check_mark: | Reason why we allow charging or not right now (NotChargingBecauseNoChargeCtrlData=0, NotChargingBecauseOvertemperature=1, NotChargingBecauseAccessControlWait=2, ChargingBecauseForceStateOn=3, NotChargingBecauseForceStateOff=4, NotChargingBecauseScheduler=5, NotChargingBecauseEnergyLimit=6, ChargingBecauseAwattarPriceLow=7, ChargingBecauseAutomaticStopTestLadung=8, ChargingBecauseAutomaticStopNotEnoughTime=9, ChargingBecauseAutomaticStop=10, ChargingBecauseAutomaticStopNoClock=11, ChargingBecausePvSurplus=12, ChargingBecauseFallbackGoEDefault=13, ChargingBecauseFallbackGoEScheduler=14, ChargingBecauseFallbackDefault=15, NotChargingBecauseFallbackGoEAwattar=16, NotChargingBecauseFallbackAwattar=17, NotChargingBecauseFallbackAutomaticStop=18, ChargingBecauseCarCompatibilityKeepAlive=19, ChargingBecauseChargePauseNotAllowed=20, NotChargingBecauseSimulateUnplugging=22, NotChargingBecausePhaseSwitch=23, NotChargingBecauseMinPauseDuration=24) | `15` |
 | `mptwt`<br>`minPhaseToggleWaitTime` | Min Phase Toggle Wait Time | R/W | `integer`<br>`milliseconds` | Config | :white_large_square: | min phase toggle wait time (in milliseconds) | `600000` |
@@ -216,14 +216,14 @@
 | `nmo`<br>`norwayMode` | Norway Mode | R/W | `boolean`<br>`bool` | Config | :white_large_square: | norway_mode / ground check enabled when norway mode is disabled (inverted) | `false` |
 | `nrg`<br>`energy` | Charging Energy | R | `array`<br>`array` | Status | :heavy_check_mark: | energy array, U (L1, L2, L3, N), I (L1, L2, L3), P (L1, L2, L3, N, Total), pf (L1, L2, L3, N) | `[235, 234, 234, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]` |
 | `nvs`<br>- |  |  | `object`<br>- |  | :white_large_square: |  | `{"used_entries": 120, "free_entries": 7944, "total_entries": 8064, "namespace_count": 2, "nvs_handle_user": 52}` |
-| `obm`<br>- |  |  | `unknown`<br>- |  | :white_large_square: |  | `"None"` |
-| `oca`<br>`otaCloudApp` | OTA Cloud App | R | `object`<br>`optional<object>` | Status | :white_large_square: | ota cloud app description | `"None"` |
+| `obm`<br>- |  |  | `unknown`<br>- |  | :white_large_square: |  | `null` |
+| `oca`<br>`otaCloudApp` | OTA Cloud App | R | `object`<br>`optional<object>` | Status | :white_large_square: | ota cloud app description | `null` |
 | `occa`<br>- |  |  | `integer`<br>- |  | :white_large_square: |  | `2` |
-| `ocl`<br>`otaCloudLength` | OTA Cloud Length | R | `integer`<br>`optional<int>` | Status | :white_large_square: | ota from cloud length (total size) | `"None"` |
+| `ocl`<br>`otaCloudLength` | OTA Cloud Length | R | `integer`<br>`optional<int>` | Status | :white_large_square: | ota from cloud length (total size) | `null` |
 | `ocm`<br>`otaCloudMessage` | OTA Cloud Message | R | `string`<br>`string` | Status | :white_large_square: | ota from cloud message | `""` |
 | `ocp`<br>`otaCloudProgress` | OTA Cloud Progress | R | `integer`<br>`int` | Status | :white_large_square: | ota from cloud progress | `0` |
 | `ocppc`<br>- |  |  | `boolean`<br>- |  | :white_large_square: |  | `false` |
-| `ocppca`<br>- |  |  | `unknown`<br>- |  | :white_large_square: |  | `"None"` |
+| `ocppca`<br>- |  |  | `unknown`<br>- |  | :white_large_square: |  | `null` |
 | `ocppe`<br>- |  |  | `boolean`<br>- |  | :white_large_square: |  | `false` |
 | `ocpph`<br>- |  |  | `integer`<br>- |  | :white_large_square: |  | `3600` |
 | `ocppi`<br>- |  |  | `integer`<br>- |  | :white_large_square: |  | `0` |
@@ -259,7 +259,7 @@
 | `qsw`<br>`queueSizeWs` | Queue Size WS | R | `integer`<br>`size_t` | Status | :white_large_square: | queue size webserver/websocket | `5` |
 | `rbc`<br>`rebootCounter` | Reboot Counter | R | `integer`<br>`uint32` | Status | :white_large_square: | Number of device reboots | `32` |
 | `rbt`<br>`timeSinceBoot` | Time Since Boot | R | `integer`<br>`milliseconds` | Status | :white_large_square: | time since boot in milliseconds | `93641458` |
-| `rcd`<br>`residualCurrentDetection` | Residual Current Detection | R | `integer`<br>`optional<microseconds>` | Status | :white_large_square: | residual current detection (in microseconds) WILL CHANGE IN FUTURE | `"None"` |
+| `rcd`<br>`residualCurrentDetection` | Residual Current Detection | R | `integer`<br>`optional<microseconds>` | Status | :white_large_square: | residual current detection (in microseconds) WILL CHANGE IN FUTURE | `null` |
 | `rcsl`<br>- |  |  | `boolean`<br>- |  | :white_large_square: |  | `false` |
 | `rfb`<br>`relayFeedback` | Relay Feedback | R | `integer`<br>`int` | Status | :white_large_square: | Relay Feedback | `1699` |
 | `rfide`<br>- |  |  | `boolean`<br>- |  | :white_large_square: |  | `true` |
@@ -283,10 +283,10 @@
 | `sdca`<br>- |  |  | `integer`<br>- |  | :white_large_square: |  | `2` |
 | `sh`<br>`stopHysteresis` | Stop Hysteresis | R/W | `float`<br>`float` | Config | :white_large_square: | stopHysteresis in W | `200` |
 | `smca`<br>- |  |  | `integer`<br>- |  | :white_large_square: |  | `2` |
-| `smd`<br>- |  |  | `unknown`<br>- |  | :white_large_square: |  | `"None"` |
+| `smd`<br>- |  |  | `unknown`<br>- |  | :white_large_square: |  | `null` |
 | `spl3`<br>`threePhaseSwitchLevel` | Three Phase Switch Level | R/W | `float`<br>`float` | Config | :white_large_square: | threePhaseSwitchLevel | `4200` |
 | `sse`<br>`serialNumber` | Serial Number | R | `string`<br>`string` | Constant | :heavy_check_mark: | serial number | `"<some_serialnr>"` |
-| `stao`<br>- |  |  | `unknown`<br>- |  | :white_large_square: |  | `"None"` |
+| `stao`<br>- |  |  | `unknown`<br>- |  | :white_large_square: |  | `null` |
 | `su`<br>`simulateUnplugging` | Simulate Unplugging | R/W | `boolean`<br>`bool` | Config | :white_large_square: | simulateUnplugging or simulateUnpluggingShort? (see v2) | `false` |
 | `sua`<br>`simulateUnpluggingAlways` | Simulate Unplugging Always | R/W | `boolean`<br>`bool` | Config | :white_large_square: | simulateUnpluggingAlways | `false` |
 | `sumd`<br>`simulateUnpluggingDuration` | Simulate Unplugging Duration | R/W | `integer`<br>`milliseconds` | Config | :white_large_square: | simulate unpluging duration (in milliseconds) | `5000` |
@@ -300,7 +300,7 @@
 | `tpcm`<br>- |  |  | `array`<br>- |  | :white_large_square: |  | `[4, 0, 3, 1, 0, 0, 0, 0, 43, 2, 53, 0, 0, 0, 50, 0, 0, 0, 0, 0, 10]` |
 | `trx`<br>`transaction` | Transaction | R/W | `integer`<br>`optional<uint8>` | Status | :white_large_square: | transaction, null when no transaction, 0 when without card, otherwise
 cardIndex + 1 (1: 0. card, 2: 1. card, ...)
- | `"None"` |
+ | `null` |
 | `ts`<br>`timeServer` | Time Server | R | `string`<br>`string` | Config | :white_large_square: | time server | `"europe.pool.ntp.org"` |
 | `tse`<br>`timeServerEnabled` | Time Server Enabled | R/W | `boolean`<br>`bool` | Config | :heavy_check_mark: | time server enabled (NTP) | `false` |
 | `tsom`<br>`timeServerOperatingMode` | Time Server Operating Mode | R | `integer`<br>`uint8` | Status | :white_large_square: | time server operating mode (POLL=0, LISTENONLY=1) | `0` |
@@ -324,7 +324,7 @@ cardIndex + 1 (1: 0. card, 2: 1. card, ...)
 | `wccw`<br>`wsConnectedClients` | WS Connected Clients | R | `integer`<br>`uint8` | Status | :white_large_square: | webserver connected clients as WEBSOCKET | `2` |
 | `wda`<br>- |  |  | `boolean`<br>- |  | :white_large_square: |  | `false` |
 | `wen`<br>`wifiEnabled` | WiFi Enabled | R/W | `boolean`<br>`bool` | Config | :white_large_square: | wifiEnabled (bool), turns off/on the WiFi (not the AccessPoint) | `true` |
-| `wfb`<br>`wifiFailedMac` | WiFi Failed MAC Address | R | `array`<br>`array` | Status | :white_large_square: | WiFi failed mac addresses | `"None"` |
+| `wfb`<br>`wifiFailedMac` | WiFi Failed MAC Address | R | `array`<br>`array` | Status | :white_large_square: | WiFi failed mac addresses | `null` |
 | `wh`<br>`energyCounterSinceStart` | Energy Counter Since Start | R | `float`<br>`double` | Status | :heavy_check_mark: | energy in Wh since car connected | `2133.804` |
 | `wifis`<br>`wifiConfigs` | WiFi Configs | R/W | `array`<br>`array` | Config | :white_large_square: | wifi configurations with ssids and keys, if you only want to change the second entry, send an array with 1 empty and 1 filled wifi config object: `[{}, {"ssid":"","key":""}]` | `[{"ssid": "<SOME_SSID>", "key": true, "useStaticIp": false, "staticIp": "0.0.0.0", "staticSubnet": "0.0.0.0", "staticGateway": "0.0.0.0", "useStaticDns": false, "staticDns0": "0.0.0.0", "staticDns1": "0.0.0.0", "staticDns2": "0.0.0.0"}, {"ssid": "", "key": false, "useStaticIp": false, "staticIp": "0.0.0.0", "staticSubnet": "0.0.0.0", "staticGateway": "0.0.0.0", "useStaticDns": false, "staticDns0": "0.0.0.0", "staticDns1": "0.0.0.0", "staticDns2": "0.0.0.0"}]` |
 | `wpb`<br>`wifiPlannedMac` | WiFi Planned MAC | R | `array`<br>`array` | Status | :white_large_square: | WiFi planned mac addresses | `"<SOME_BSSID>"` |
