@@ -29,7 +29,7 @@ function runShellWithProps() {
 
 function runShellWithAllProps() {
     PROP_FILTER="${1:-.*}"
-    PROPS=$(yq -r -c '.properties[] | (.key, .childProps?[]?.key?)' "${WPCONFIG_FILE}" | grep "^${PROP_FILTER}" | xargs echo)
+    PROPS=$(gojq --yaml-input -r -c '.properties[] | (.key, .childProps?[]?.key?)' "${WPCONFIG_FILE}" | grep "^${PROP_FILTER}" | xargs echo)
     runShellWithProps "${PROPS}"
 }
 
@@ -51,11 +51,11 @@ case "${cmd}" in
         WATTPILOT_DEBUG_LEVEL=WARNING MQTT_ENABLED=false HA_ENABLED=false runShell "rawvalues" >>${logfile} 2>&1
         WATTPILOT_DEBUG_LEVEL=WARNING MQTT_ENABLED=false HA_ENABLED=false runShell "properties" >>${logfile} 2>&1
     ;;
-    ha-default)
-        runShellWithProps ""
+    ha)
+        runShellWithProps
     ;;
     ha-all)
-        runShellWithAllProps ""
+        runShellWithAllProps
     ;;
     ha-test-props)
         runShellWithProps "alw loe nrg fhz spl3 acu ama cdi ffna fna"
@@ -112,6 +112,12 @@ case "${cmd}" in
             | grep -E '^\|' \
             | sort
         ) >ShellEnvVariables.md
+    ;;
+    validate-yaml)
+        echo -n "Properties with missing mandatory fields: "
+        gojq --yaml-input -c '[.properties[],.childProps[]? | select(.key==null or .jsonType==null)]' <"${WPCONFIG_FILE}"
+        echo -n "Child properties with missing jsonType: "
+        gojq --yaml-input -c '[.properties[] | . as $ppd | .childProps[]? | . as $cpd | select(.jsonType==null and $ppd.itemType==null) | .key]' <"${WPCONFIG_FILE}"
     ;;
     *)
         echo "Unknown command: ${cmd}"
