@@ -81,7 +81,7 @@ mosquitto_sub -t 'wattpilot/#' -v
 ## Home Assistant MQTT Discovery Support
 
 To enable Home Assistant integration (using MQTT) set `MQTT_ENABLED` and `HA_ENABLED` to `true` and make sure to correctly configure the [MQTT Integration](https://www.home-assistant.io/integrations/mqtt).
-It provides auto-discovery of entities using property configuration from `wattpilot.yaml`.
+It provides auto-discovery of entities using property configuration from [wattpilot.yaml](src/wattpilot/ressources/wattpilot.yaml).
 The is the simplest possible way to start the shell with HA support:
 
 ```bash
@@ -145,7 +145,7 @@ docker-compose run wattpilot shell
 | Environment Variable        | Description                                                                                                                                                                                  | Default Value                                 |
 | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
 | `HA_ENABLED`                | Enable Home Assistant Discovery                                                                                                                                                              | `false`                                       |
-| `HA_PROPERTIES`             | Only discover given properties (leave unset for all properties having `homeAssistant` set in `wattpilot.yaml`)                                                                               |                                               |
+| `HA_PROPERTIES`             | Only discover given properties (leave unset for all properties having `homeAssistant` set in [wattpilot.yaml](src/wattpilot/ressources/wattpilot.yaml))                                                                               |                                               |
 | `HA_TOPIC_CONFIG`           | Topic pattern for HA discovery config                                                                                                                                                        | `homeassistant/{component}/{uniqueId}/config` |
 | `HA_WAIT_INIT_S`            | Wait initial number of seconds after starting discovery (in addition to wait time depending on the number of properties). May be increased, if entities in HA are not populated with values. | `5`                                           |
 | `HA_WAIT_PROPS_MS`          | Wait milliseconds per property after discovery before publishing property values. May be increased, if entities in HA are not populated with values.                                         | `50`                                          |
@@ -178,5 +178,5 @@ docker-compose run wattpilot shell
 The MQTT and Home Assistant support heavily depends on the API definition in [wattpilot.yaml](src/wattpilot/ressources/wattpilot.yaml) which has been compiled from different sources and does not yet contain a full set of information for all relevant properties.
 See [API.md](API.md) for a generated documentation of the available data.
 
-If you want to help, please have a look at the properties defined in `wattpilot.yaml` and fill in the missing pieces (e.g. `title`, `description`, `rw`, `jsonType`, `childProps`, `homeAssistant`, `device_class`, `unit_of_measurement`, `enabled_by_default`) to properties you care about.
+If you want to help, please have a look at the properties defined in [wattpilot.yaml](src/wattpilot/ressources/wattpilot.yaml) and fill in the missing pieces (e.g. `title`, `description`, `rw`, `jsonType`, `childProps`, `homeAssistant`, `device_class`, `unit_of_measurement`, `enabled_by_default`) to properties you care about.
 The file contains enough documentation and a lot of working examples to get you started.
