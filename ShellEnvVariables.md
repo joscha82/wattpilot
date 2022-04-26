@@ -9,7 +9,6 @@
 | `HA_WAIT_PROPS_MS` | `0` |
 | `MQTT_AVAILABLE_PAYLOAD` | `online` |
 | `MQTT_CLIENT_ID` | `wattpilot2mqtt` |
-| `MQTT_DECOMPOSE_PROPERTIES` | `true` |
 | `MQTT_ENABLED` | `false` |
 | `MQTT_HOST` |  |
 | `MQTT_MESSAGES` |  |
@@ -30,3 +29,4 @@
 | `WATTPILOT_HOST` |  |
 | `WATTPILOT_INIT_TIMEOUT` | `30` |
 | `WATTPILOT_PASSWORD` |  |
+| `WATTPILOT_SPLIT_PROPERTIES` | `true` |

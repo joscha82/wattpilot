@@ -626,7 +626,7 @@ def mqtt_publish_property(wp, mqtt_client, pd, value, force_publish=False):
     _LOGGER.debug(
         f"Publishing property '{prop_name}' with value '{encoded_value}' to MQTT ...")
     mqtt_client.publish(property_topic, encoded_value, retain=True)
-    if MQTT_DECOMPOSE_PROPERTIES and "childProps" in pd:
+    if WATTPILOT_SPLIT_PROPERTIES and "childProps" in pd:
         _LOGGER.debug(
             f"Splitting child props of property {prop_name} as {pd['jsonType']} for value {value} ...")
         for p in pd["childProps"]:
@@ -822,7 +822,7 @@ def ha_get_template_filter_from_json_type(json_type):
 
 def ha_discover_property(wp, mqtt_client, pd, disable_discovery=False, force_enablement=None):
     global HA_TOPIC_CONFIG
-    global MQTT_DECOMPOSE_PROPERTIES
+    global WATTPILOT_SPLIT_PROPERTIES
     global MQTT_TOPIC_PROPERTY_BASE
     global MQTT_TOPIC_PROPERTY_SET
     global MQTT_TOPIC_PROPERTY_STATE
@@ -886,7 +886,7 @@ def ha_discover_property(wp, mqtt_client, pd, disable_discovery=False, force_ena
             del ha_discovery_config["command_topic"]
             payload = utils_value2json(ha_discovery_config)
         mqtt_client.publish(mqtt_subst_topic(HA_TOPIC_CONFIG, topic_subst_map | {"component": "sensor"}), payload, retain=True)
-    if MQTT_DECOMPOSE_PROPERTIES and "childProps" in pd:
+    if WATTPILOT_SPLIT_PROPERTIES and "childProps" in pd:
         for p in pd["childProps"]:
             ha_discover_property(wp, mqtt_client, p, disable_discovery, force_enablement)
 
@@ -968,7 +968,6 @@ def main_setup_env():
     global HA_WAIT_PROPS_MS
     global MQTT_AVAILABLE_PAYLOAD
     global MQTT_CLIENT_ID
-    global MQTT_DECOMPOSE_PROPERTIES
     global MQTT_ENABLED
     global MQTT_HOST
     global MQTT_MESSAGES
@@ -989,6 +988,7 @@ def main_setup_env():
     global WATTPILOT_HOST
     global WATTPILOT_INIT_TIMEOUT
     global WATTPILOT_PASSWORD
+    global WATTPILOT_SPLIT_PROPERTIES
     HA_ENABLED = os.environ.get('HA_ENABLED', 'false')
     HA_PROPERTIES = os.environ.get('HA_PROPERTIES', '').split(sep=' ')
     HA_TOPIC_CONFIG = os.environ.get(
@@ -997,8 +997,6 @@ def main_setup_env():
     HA_WAIT_PROPS_MS = int(os.environ.get('HA_WAIT_PROPS_MS', '0'))
     MQTT_AVAILABLE_PAYLOAD = os.environ.get('MQTT_AVAILABLE_PAYLOAD', 'online')
     MQTT_CLIENT_ID = os.environ.get('MQTT_CLIENT_ID', 'wattpilot2mqtt')
-    MQTT_DECOMPOSE_PROPERTIES = bool(
-        os.environ.get('MQTT_DECOMPOSE_PROPERTIES', 'true'))
     MQTT_ENABLED = os.environ.get('MQTT_ENABLED', 'false')
     MQTT_HOST = os.environ.get('MQTT_HOST', '')
     MQTT_MESSAGES = os.environ.get('MQTT_MESSAGES', '').split(sep=' ')
@@ -1026,6 +1024,8 @@ def main_setup_env():
     WATTPILOT_INIT_TIMEOUT = int(
         os.environ.get('WATTPILOT_INIT_TIMEOUT', '30'))
     WATTPILOT_PASSWORD = os.environ.get('WATTPILOT_PASSWORD', '')
+    WATTPILOT_SPLIT_PROPERTIES = bool(
+        os.environ.get('WATTPILOT_SPLIT_PROPERTIES', 'true'))
 
     # Ensure wattpilot host an password are set:
     assert WATTPILOT_HOST != '', "WATTPILOT_HOST not set!"
