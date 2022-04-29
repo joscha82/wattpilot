@@ -1998,7 +1998,7 @@ properties:
       Total), pf (L1, L2, L3, N)
     homeAssistant:
       config:
-        enabled_by_default: false
+        enabled_by_default: true
     childProps:
       - key: nrg_ul1
         title: Charging Voltage L1
@@ -2095,6 +2095,7 @@ properties:
           config:
             device_class: power
             unit_of_measurement: W
+            enabled_by_default: true
       - key: nrg_pfl1
         title: Charging Power Factor L1
         valueRef: 12
