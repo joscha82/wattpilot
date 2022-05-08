@@ -24,7 +24,6 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.9',
         "Programming Language :: Python :: 3.10",
         'Programming Language :: Python :: 3 :: Only',
     ],
@@ -35,8 +34,8 @@ setup(
         'console_scripts': ['wattpilotshell=wattpilot.wattpilotshell:main'],
     },
     package_data = { '' : ['wattpilot.yaml'] },
-    python_requires='>=3.9, <4',
-    install_requires=['websocket-client','PyYAML','pyreadline','paho-mqtt'],
+    python_requires='>=3.10, <4',
+    install_requires=['websocket-client','PyYAML','paho-mqtt'],
     platforms="any",
     license="MIT License",
     project_urls={
