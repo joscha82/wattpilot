@@ -444,7 +444,7 @@ class Wattpilot(object):
 
     def __on_AuthError(self,message):
         if message.message=="Wrong password":
-            self.wsapp.close()
+            self._wsapp.close()
             _LOGGER.error("Authentication failed: %s" , message.message)
 
     def __on_DeltaStatus(self,message):
