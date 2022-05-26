@@ -29,7 +29,7 @@ Run the interactive shell
 export WATTPILOT_HOST=<wattpilot_ip>
 export WATTPILOT_PASSWORD=<password>
 wattpilotshell
-Welcome to the Wattpilot Shell 0.1.   Type help or ? to list commands.
+Welcome to the Wattpilot Shell 0.2.   Type help or ? to list commands.
 
 wattpilot> help
 
