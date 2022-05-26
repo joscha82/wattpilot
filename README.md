@@ -46,11 +46,11 @@ It's also possible to pass a single command to the shell to integrate it into sc
 
 ```bash
 # Usage:
-wattpilotshell <wattpilot_ip> <password> "<command> <args...>"
+wattpilotshell "<command> <args...>"
 
 # Examples:
-wattpilotshell <wattpilot_ip> <password> "get amp"
-wattpilotshell <wattpilot_ip> <password> "set amp 6"
+wattpilotshell "get amp"
+wattpilotshell "set amp 6"
 ```
 
 ## MQTT Bridge Support
@@ -106,12 +106,12 @@ mosquitto_sub -t 'homeassistant/#' -v
 
 ## Docker Support
 
-The Wattpilot MQTT bridge with Home Assistant MQTT discovery can be run as a docker container.
-Here's how to do that:
+The Docker images for the Wattpilot MQTT bridge with Home Assistant MQTT discovery can be found on [GitHub Packages](https://github.com/joscha82/wattpilot/pkgs/container/wattpilot):
 
 ```bash
-# Build image:
-docker-compose build
+# Pull Image:
+docker pull ghcr.io/joscha82/wattpilot:latest
+# NOTE: Use the tag 'latest' for the latest release, a specific release version or 'main' for the current image of the not yet released main branch.
 
 # Create .env file with environment variables:
 cat .env
