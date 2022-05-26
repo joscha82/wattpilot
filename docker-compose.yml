@@ -2,9 +2,7 @@ version: '3'
 
 services:
   wattpilot:
-    image: wattpilot:latest
-    build:
-      context: .
+    image: ghcr.io/joscha82/wattpilot:main
     command: server
     restart: always
     environment:
