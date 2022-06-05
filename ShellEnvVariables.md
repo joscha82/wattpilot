@@ -2,6 +2,7 @@
 
 | Environment Variable | Default Value |
 |----------------------|---------------|
+| `HA_DISABLED_ENTITIES` | `false` |
 | `HA_ENABLED` | `false` |
 | `HA_PROPERTIES` |  |
 | `HA_TOPIC_CONFIG` | `homeassistant/{component}/{uniqueId}/config` |
@@ -24,9 +25,11 @@
 | `MQTT_TOPIC_PROPERTY_SET` | `~/set` |
 | `MQTT_TOPIC_PROPERTY_STATE` | `~/state` |
 | `WATTPILOT_AUTOCONNECT` | `true` |
+| `WATTPILOT_AUTO_RECONNECT` | `true` |
 | `WATTPILOT_CONNECT_TIMEOUT` | `30` |
-| `WATTPILOT_DEBUG_LEVEL` | `INFO` |
 | `WATTPILOT_HOST` |  |
 | `WATTPILOT_INIT_TIMEOUT` | `30` |
+| `WATTPILOT_LOGLEVEL` | `INFO` |
 | `WATTPILOT_PASSWORD` |  |
+| `WATTPILOT_RECONNECT_INTERVAL` | `30` |
 | `WATTPILOT_SPLIT_PROPERTIES` | `true` |

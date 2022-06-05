@@ -35,7 +35,7 @@ setup(
     },
     package_data = { '' : ['wattpilot.yaml'] },
     python_requires='>=3.10, <4',
-    install_requires=['websocket-client','PyYAML','paho-mqtt'],
+    install_requires=['websocket-client','PyYAML','paho-mqtt','cmd2'],
     platforms="any",
     license="MIT License",
     project_urls={
