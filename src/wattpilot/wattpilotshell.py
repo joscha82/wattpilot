@@ -811,13 +811,15 @@ def mqtt_subst_topic(s, values, expand=True):
     return s.format(**all_values)
 
 
-def mqtt_setup_client(host, port, client_id, available_topic, command_topic):
+def mqtt_setup_client(host, port, client_id, available_topic, command_topic, username="", password=""):
     # Connect to MQTT server:
     mqtt_client = mqtt.Client(client_id)
     mqtt_client.on_message = mqtt_set_value
     _LOGGER.info(f"Connecting to MQTT host {host} on port {port} ...")
     mqtt_client.will_set(
         available_topic, payload="offline", qos=0, retain=True)
+    if username != "":
+        mqtt_client.username_pw_set(username, password)
     mqtt_client.connect(host, port)
     mqtt_client.loop_start()
     mqtt_client.publish(available_topic, payload="online", qos=0, retain=True)
@@ -830,15 +832,20 @@ def mqtt_setup(wp):
     global MQTT_CLIENT_ID
     global MQTT_HOST
     global MQTT_PORT
+    global MQTT_PASSWORD
     global MQTT_PROPERTIES
     global MQTT_TOPIC_AVAILABLE
     global MQTT_TOPIC_PROPERTY_SET
     _LOGGER.debug(f"mqtt_setup(wp)")
+    global MQTT_USERNAME
+
     # Connect to MQTT server:
     mqtt_client = mqtt_setup_client(MQTT_HOST, MQTT_PORT, MQTT_CLIENT_ID,
                                     mqtt_subst_topic(MQTT_TOPIC_AVAILABLE, {}),
                                     mqtt_subst_topic(MQTT_TOPIC_PROPERTY_SET, {
                                                      "propName": "+"}),
+                                    MQTT_USERNAME,
+                                    MQTT_PASSWORD,
                                     )
     MQTT_PROPERTIES = mqtt_get_watched_properties(wp)
     _LOGGER.info(
@@ -1111,6 +1118,7 @@ def main_setup_env():
     global MQTT_HOST
     global MQTT_MESSAGES
     global MQTT_NOT_AVAILABLE_PAYLOAD
+    global MQTT_PASSWORD
     global MQTT_PORT
     global MQTT_PROPERTIES
     global MQTT_PUBLISH_MESSAGES
@@ -1121,6 +1129,7 @@ def main_setup_env():
     global MQTT_TOPIC_PROPERTY_BASE
     global MQTT_TOPIC_PROPERTY_SET
     global MQTT_TOPIC_PROPERTY_STATE
+    global MQTT_USERNAME
     global WATTPILOT_AUTOCONNECT
     global WATTPILOT_AUTO_RECONNECT
     global WATTPILOT_CONNECT_TIMEOUT
@@ -1144,6 +1153,7 @@ def main_setup_env():
     MQTT_MESSAGES = os.environ.get('MQTT_MESSAGES', '').split(sep=' ')
     MQTT_NOT_AVAILABLE_PAYLOAD = os.environ.get(
         'MQTT_NOT_AVAILABLE_PAYLOAD', 'offline')
+    MQTT_PASSWORD = os.environ.get('MQTT_PASSWORD', '')
     MQTT_PORT = int(os.environ.get('MQTT_PORT', '1883'))
     MQTT_PROPERTIES = os.environ.get('MQTT_PROPERTIES', '').split(sep=' ')
     MQTT_PUBLISH_MESSAGES = os.environ.get('MQTT_PUBLISH_MESSAGES', 'false')
@@ -1159,6 +1169,7 @@ def main_setup_env():
         'MQTT_TOPIC_PROPERTY_SET', '~/set')
     MQTT_TOPIC_PROPERTY_STATE = os.environ.get(
         'MQTT_TOPIC_PROPERTY_STATE', '~/state')
+    MQTT_USERNAME = os.environ.get('MQTT_USERNAME', '')
     WATTPILOT_AUTOCONNECT = os.environ.get('WATTPILOT_AUTOCONNECT', 'true')
     WATTPILOT_AUTO_RECONNECT = os.environ.get('WATTPILOT_AUTO_RECONNECT', 'true')
     WATTPILOT_CONNECT_TIMEOUT = int(
