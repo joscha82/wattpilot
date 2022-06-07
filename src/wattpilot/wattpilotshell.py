@@ -478,6 +478,25 @@ Usage: set <propName> <value>"""
             wp.send_update(args[0], mqtt_get_decoded_property(
                 wpdef["properties"][args[0]], v))
 
+    def do_UpdateInverter(self, arg: str) -> bool | None:
+        """Performs an Inverter Operation
+Usage: updateInverter pair|unpair <inverterID>"""
+        global wp
+        global wpdef
+        args = arg.split(' ')
+        if not self._ensure_connected():
+            return
+        if len(args) < 2 or arg == '':
+            print(f"ERROR: Wrong number of arguments!")
+        elif args[0] not in ["pair", "unpair"]:
+            print(f"ERROR: Unknown Operation: {args[0]}")
+        else:
+            if args[0] == 'pair':
+                wp.pairInverter(args[1])
+            if args[0] == 'unpair':
+                wp.unpairInverter(args[1])
+            
+
     def complete_set(self, text, line, begidx, endidx):
         global wpdef
         token = line.split(' ')

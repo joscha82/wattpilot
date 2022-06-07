@@ -320,6 +320,34 @@ class Wattpilot(object):
         else:
             self.__send(message)
 
+    def unpairInverter(self,InverterID):
+        message = {}
+        message["type"]="unpairInverter"
+        self.__requestid = self.__requestid+1
+        message["requestId"]=self.__requestid
+        message["inverterId"]=InverterID
+        if (self._secured is not None):
+            if  (self._secured > 0):
+                self.__send(message,True)
+            else:
+                self.__send(message)
+        else:
+            self.__send(message)
+
+    def pairInverter(self,InverterID):
+        message = {}
+        message["type"]="pairInverter"
+        self.__requestid = self.__requestid+1
+        message["requestId"]=self.__requestid
+        message["inverterId"]=InverterID
+        if (self._secured is not None):
+            if  (self._secured > 0):
+                self.__send(message,True)
+            else:
+                self.__send(message)
+        else:
+            self.__send(message)
+
     def __update_property(self,name,value):
 
         self._allProps[name] = value
@@ -462,9 +490,10 @@ class Wattpilot(object):
 
     def __on_response(self,message):
         if message.success:
-            props = message.status.__dict__
-            for key in props:
-                self.__update_property(key,props[key])
+            if hasattr(message,"status"):
+                props = message.status.__dict__
+                for key in props:
+                    self.__update_property(key,props[key])
         else:
             _LOGGER.error("Error Sending Request %s. Message: %s" ,message.requestId,message.message)
 
