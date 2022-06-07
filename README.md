@@ -33,10 +33,12 @@ Welcome to the Wattpilot Shell 0.2.   Type help or ? to list commands.
 
 wattpilot> help
 
-Documented commands (type help <topic>):
-========================================
-EOF      exit  ha    info  properties  server  unwatch  watch
-connect  get   help  mqtt  rawvalues   set     values 
+Documented commands (use 'help -v' for verbose/'help <topic>' for details):
+===========================================================================
+alias       EOF   help     mqtt        rawvalues     set        values
+connect     exit  history  properties  run_pyscript  shell      watch 
+disconnect  get   info     propset     run_script    shortcuts
+edit        ha    macro    quit        server        unwatch  
 ```
 
 The shell supports TAB-completion for all commands and their arguments.
@@ -49,8 +51,8 @@ It's also possible to pass a single command to the shell to integrate it into sc
 wattpilotshell "<command> <args...>"
 
 # Examples:
-wattpilotshell "get amp"
-wattpilotshell "set amp 6"
+wattpilotshell "propget amp"
+wattpilotshell "propset amp 6"
 ```
 
 ## MQTT Bridge Support

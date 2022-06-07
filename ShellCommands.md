@@ -26,7 +26,7 @@ See also:
 ## connect
 
 ```bash
-Connect to Wattpilot (using WATTPILOT_* env variables)
+Connect to Wattpilot
 Usage: connect
 ```
 
@@ -61,13 +61,6 @@ optional arguments:
 ```bash
 Exit the shell
 Usage: exit
-```
-
-## get
-
-```bash
-Get a property value
-Usage: get <propName>
 ```
 
 ## ha
@@ -219,6 +212,20 @@ List property definitions and values
 Usage: properties [propRegex]
 ```
 
+## propget
+
+```bash
+Get a property value
+Usage: propget <propName>
+```
+
+## propset
+
+```bash
+Set a property value
+Usage: propset <propName> <value>
+```
+
 ## quit
 
 ```bash
@@ -287,8 +294,17 @@ Usage: server
 ## set
 
 ```bash
-Set a property value
-Usage: set <propName> <value>
+Usage: set [-h] [param] [value]
+
+Set a settable parameter or show current settings of parameters
+
+positional arguments:
+  param       parameter to set or view
+  value       new value for settable
+
+optional arguments:
+  -h, --help  show this help message and exit
+
 ```
 
 ## shell

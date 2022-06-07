@@ -14,6 +14,7 @@
 | `MQTT_HOST` |  |
 | `MQTT_MESSAGES` |  |
 | `MQTT_NOT_AVAILABLE_PAYLOAD` | `offline` |
+| `MQTT_PASSWORD` |  |
 | `MQTT_PORT` | `1883` |
 | `MQTT_PROPERTIES` |  |
 | `MQTT_PUBLISH_MESSAGES` | `false` |
@@ -24,6 +25,7 @@
 | `MQTT_TOPIC_PROPERTY_BASE` | `{baseTopic}/properties/{propName}` |
 | `MQTT_TOPIC_PROPERTY_SET` | `~/set` |
 | `MQTT_TOPIC_PROPERTY_STATE` | `~/state` |
+| `MQTT_USERNAME` |  |
 | `WATTPILOT_AUTOCONNECT` | `true` |
 | `WATTPILOT_AUTO_RECONNECT` | `true` |
 | `WATTPILOT_CONNECT_TIMEOUT` | `30` |
