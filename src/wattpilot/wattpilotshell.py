@@ -1,4 +1,4 @@
-import cmd
+import cmd2
 import json
 import logging
 import math
@@ -101,14 +101,32 @@ def wp_read_apidef():
 def wp_initialize(host, password):
     global wp
     # Connect to Wattpilot:
+    _LOGGER.debug(f"wp_initialize()")
     wp = wattpilot.Wattpilot(host, password)
+    wp._auto_reconnect = WATTPILOT_AUTO_RECONNECT
+    wp._reconnect_interval = WATTPILOT_RECONNECT_INTERVAL
     wp.connect()
-    # Wait for connection and initialization:
+    wp.add_event_handler("ws_close", wp_handle_events)
+    wp.add_event_handler("ws_open", wp_handle_events)
+    # Wait for connection and initialization - TODO: Use event handler instead to make it more responsive!
     utils_wait_timeout(lambda: wp.connected, WATTPILOT_CONNECT_TIMEOUT) or exit(
         "ERROR: Timeout while connecting to Wattpilot!")
     utils_wait_timeout(lambda: wp.allPropsInitialized, WATTPILOT_INIT_TIMEOUT) or exit(
         "ERROR: Timeout while waiting for property initialization!")
     return wp
+
+
+def wp_handle_events(event, *args):
+    global mqtt_client
+    _LOGGER.debug(f"wp_handle_events(event={event},{args})")
+    if not mqtt_client:
+        _LOGGER.debug(f"wp_handle_events(): MQTT client not yet initialized - status publishing skipped.")
+        return
+    available_topic = mqtt_subst_topic(MQTT_TOPIC_AVAILABLE, {})
+    if event['type'] == 'on_close':
+        mqtt_client.publish(available_topic, payload="offline", qos=0, retain=True)
+    elif event['type'] == 'on_open':
+        mqtt_client.publish(available_topic, payload="online", qos=0, retain=True)
 
 
 def wp_get_child_prop_value(cp):
@@ -160,7 +178,7 @@ def wp_get_all_props(available_only=True):
 
 #### Shell Functions ####
 
-class WattpilotShell(cmd.Cmd):
+class WattpilotShell(cmd2.Cmd):
     intro = f"Welcome to the Wattpilot Shell {version('wattpilot')}.   Type help or ? to list commands.\n"
     prompt = 'wattpilot> '
     file = None
@@ -205,6 +223,11 @@ Usage: connect"""
         global WATTPILOT_PASSWORD
         global wp
         wp = wp_initialize(WATTPILOT_HOST, WATTPILOT_PASSWORD)
+
+    def do_disconnect(self, arg: str) -> bool | None:
+        """Disconnect from Wattpilot
+Usage: disconnect"""
+        wp.disconnect()
 
     def do_exit(self, arg: str) -> bool | None:
         """Exit the shell
@@ -514,32 +537,38 @@ Usage: updateInverter pair|unpair <inverterID>"""
 
     def do_unwatch(self, arg: str) -> bool | None:
         """Unwatch a message or property
-Usage: unwatch <message|property> <msgType|propName>"""
+Usage: unwatch <event|message|property> <eventType|msgType|propName>"""
         global wp
         args = arg.split(' ')
         if not self._ensure_connected():
             return
         if len(args) < 2 or arg == '':
             print(f"ERROR: Wrong number of arguments!")
+        elif args[0] == 'event' and args[1] not in wp.supported_events:
+            print(f"ERROR: Event of type '{args[1]}' is not watched")
+        elif args[0] == 'event':
+            wp.remove_event_handler(args[1], self._watched_event_received)
         elif args[0] == 'message' and args[1] not in self.watching_messages:
             print(f"ERROR: Message of type '{args[1]}' is not watched")
         elif args[0] == 'message':
             self.watching_messages.remove(args[1])
             if len(self.watching_messages) == 0:
-                wp.unregister_message_callback()
+                wp.remove_event_handler("ws_message",self._watched_message_received)
         elif args[0] == 'property' and args[1] not in self.watching_properties:
             print(f"ERROR: Property with name '{args[1]}' is not watched")
         elif args[0] == 'property':
             self.watching_properties.remove(args[1])
             if len(self.watching_properties) == 0:
-                wp.unregister_property_callback()
+                wp.remove_event_handler("on_property",self._watched_property_changed)
         else:
             print(f"ERROR: Unknown watch type: {args[0]}")
 
     def complete_unwatch(self, text, line, begidx, endidx):
         token = line.split(' ')
         if len(token) == 2:
-            return self._complete_list(['message', 'property'], text)
+            return self._complete_list(['event', 'message', 'property'], text)
+        elif len(token) == 3 and token[1] == 'event':
+            return self._complete_list([e for e in wp.supported_events if len(wp._event_handler[e])>0], text)
         elif len(token) == 3 and token[1] == 'message':
             return self._complete_list(self.watching_messages, text)
         elif len(token) == 3 and token[1] == 'property':
@@ -564,8 +593,8 @@ Usage: values [propRegex] [valueRegex]"""
         return self._complete_values(text, line)
 
     def do_watch(self, arg: str) -> bool | None:
-        """Watch message or a property
-Usage: watch <message|property> <msgType|propName>"""
+        """Watch an event, a message or a property
+Usage: watch <event|message|property> <eventType|msgType|propName>"""
         global wp
         global wpdef
         args = arg.split(' ')
@@ -573,12 +602,16 @@ Usage: watch <message|property> <msgType|propName>"""
             return
         if len(args) < 2 or arg == '':
             print(f"ERROR: Wrong number of arguments!")
+        elif args[0] == 'event' and args[1] not in wp.supported_events:
+            print(f"ERROR: Unknown event type: {args[1]}")
+        elif args[0] == 'event':
+            wp.add_event_handler(args[1], self._watched_event_received)
         elif args[0] == 'message' and args[1] not in wpdef['messages']:
             print(f"ERROR: Unknown message type: {args[1]}")
         elif args[0] == 'message':
             msg_type = args[1]
             if len(self.watching_messages) == 0:
-                wp.register_message_callback(self._watched_message_received)
+                wp.add_event_handler("ws_message",self._watched_message_received)
             if msg_type not in self.watching_messages:
                 self.watching_messages.append(msg_type)
         elif args[0] == 'property' and args[1] not in wp.allProps:
@@ -586,7 +619,7 @@ Usage: watch <message|property> <msgType|propName>"""
         elif args[0] == 'property':
             prop_name = args[1]
             if len(self.watching_properties) == 0:
-                wp.register_property_callback(self._watched_property_changed)
+                wp.add_event_handler("wp_property",self._watched_property_changed)
             if prop_name not in self.watching_properties:
                 self.watching_properties.append(prop_name)
         else:
@@ -596,7 +629,9 @@ Usage: watch <message|property> <msgType|propName>"""
         global wpdef
         token = line.split(' ')
         if len(token) == 2:
-            return self._complete_list(['message', 'property'], text)
+            return self._complete_list(['event', 'message', 'property'], text)
+        elif len(token) == 3 and token[1] == 'event':
+            return self._complete_list(wp.supported_events, text)
         elif len(token) == 3 and token[1] == 'message':
             return self._complete_message(text, 'server')
         elif len(token) == 3 and token[1] == 'property':
@@ -628,16 +663,20 @@ Usage: watch <message|property> <msgType|propName>"""
             print(
                 f"  NOTE: This property is currently not provided by the connected device!")
 
-    def _watched_property_changed(self, name, value):
+    def _watched_event_received(self, event, *args):
+        print(f"Event of type '{event['type']}' with args '{args}' received!")
+
+    def _watched_property_changed(self, wp, name, value):
         global wpdef
         if name in self.watching_properties:
             pd = wpdef["properties"][name]
             _LOGGER.info(
                 f"Property {name} changed to {mqtt_get_encoded_property(pd,value)}")
 
-    def _watched_message_received(self, wp, wsapp, msg, msg_json):
-        if msg.type in self.watching_messages:
-            _LOGGER.info(f"Message of type {msg.type} received: {msg}")
+    def _watched_message_received(self, event, message):
+        msg_dict = json.loads(message)
+        if msg_dict["type"] in self.watching_messages:
+            _LOGGER.info(f"Message of type {msg_dict['type']} received: {message}")
 
     def _ensure_connected(self):
         global wp
@@ -754,25 +793,27 @@ def mqtt_publish_property(wp, mqtt_client, pd, value, force_publish=False):
             mqtt_publish_property(wp, mqtt_client, cpd, split_value, True)
 
 
-def mqtt_publish_message(wp, wsapp, msg, msg_json):
+def mqtt_publish_message(event, message):
+    _LOGGER.debug(f"""mqtt_publish_message(event={event},message={message})""")
     global mqtt_client
     global MQTT_PUBLISH_MESSAGES
     global MQTT_TOPIC_BASE
     global MQTT_PUBLISH_PROPERTIES
     global MQTT_TOPIC_MESSAGES
     global wpdef
+    wp = event['wp']
     if mqtt_client == None:
         _LOGGER.debug(f"Skipping MQTT message publishing.")
         return
-    msg_dict = json.loads(msg_json)
-    if MQTT_PUBLISH_MESSAGES == "true" and (MQTT_MESSAGES == [] or MQTT_MESSAGES == [''] or msg.type in MQTT_MESSAGES):
+    msg_dict = json.loads(message)
+    if MQTT_PUBLISH_MESSAGES == "true" and (MQTT_MESSAGES == [] or MQTT_MESSAGES == [''] or msg_dict["type"] in MQTT_MESSAGES):
         message_topic = mqtt_subst_topic(MQTT_TOPIC_MESSAGES, {
             "baseTopic": MQTT_TOPIC_BASE,
             "serialNumber": wp.serial,
-            "messageType": msg.type,
+            "messageType": msg_dict["type"],
         })
-        mqtt_client.publish(message_topic, msg_json)
-    if MQTT_PUBLISH_PROPERTIES == "true" and msg.type in ["fullStatus", "deltaStatus"]:
+        mqtt_client.publish(message_topic, message)
+    if MQTT_PUBLISH_PROPERTIES == "true" and msg_dict["type"] in ["fullStatus", "deltaStatus"]:
         for prop_name, value in msg_dict["status"].items():
             pd = wpdef["properties"][prop_name]
             mqtt_publish_property(wp, mqtt_client, pd, value)
@@ -789,13 +830,15 @@ def mqtt_subst_topic(s, values, expand=True):
     return s.format(**all_values)
 
 
-def mqtt_setup_client(host, port, client_id, available_topic, command_topic):
+def mqtt_setup_client(host, port, client_id, available_topic, command_topic, username="", password=""):
     # Connect to MQTT server:
     mqtt_client = mqtt.Client(client_id)
     mqtt_client.on_message = mqtt_set_value
     _LOGGER.info(f"Connecting to MQTT host {host} on port {port} ...")
     mqtt_client.will_set(
         available_topic, payload="offline", qos=0, retain=True)
+    if username != "":
+        mqtt_client.username_pw_set(username, password)
     mqtt_client.connect(host, port)
     mqtt_client.loop_start()
     mqtt_client.publish(available_topic, payload="online", qos=0, retain=True)
@@ -808,19 +851,25 @@ def mqtt_setup(wp):
     global MQTT_CLIENT_ID
     global MQTT_HOST
     global MQTT_PORT
+    global MQTT_PASSWORD
     global MQTT_PROPERTIES
     global MQTT_TOPIC_AVAILABLE
     global MQTT_TOPIC_PROPERTY_SET
+    _LOGGER.debug(f"mqtt_setup(wp)")
+    global MQTT_USERNAME
+
     # Connect to MQTT server:
     mqtt_client = mqtt_setup_client(MQTT_HOST, MQTT_PORT, MQTT_CLIENT_ID,
                                     mqtt_subst_topic(MQTT_TOPIC_AVAILABLE, {}),
                                     mqtt_subst_topic(MQTT_TOPIC_PROPERTY_SET, {
                                                      "propName": "+"}),
+                                    MQTT_USERNAME,
+                                    MQTT_PASSWORD,
                                     )
     MQTT_PROPERTIES = mqtt_get_watched_properties(wp)
     _LOGGER.info(
         f"Registering message callback to publish updates to the following properties to MQTT: {MQTT_PROPERTIES}")
-    wp.register_message_callback(mqtt_publish_message)
+    wp.add_event_handler("ws_message", mqtt_publish_message)
     return mqtt_client
 
 
@@ -1088,6 +1137,7 @@ def main_setup_env():
     global MQTT_HOST
     global MQTT_MESSAGES
     global MQTT_NOT_AVAILABLE_PAYLOAD
+    global MQTT_PASSWORD
     global MQTT_PORT
     global MQTT_PROPERTIES
     global MQTT_PUBLISH_MESSAGES
@@ -1098,12 +1148,15 @@ def main_setup_env():
     global MQTT_TOPIC_PROPERTY_BASE
     global MQTT_TOPIC_PROPERTY_SET
     global MQTT_TOPIC_PROPERTY_STATE
+    global MQTT_USERNAME
     global WATTPILOT_AUTOCONNECT
+    global WATTPILOT_AUTO_RECONNECT
     global WATTPILOT_CONNECT_TIMEOUT
-    global WATTPILOT_DEBUG_LEVEL
+    global WATTPILOT_LOGLEVEL
     global WATTPILOT_HOST
     global WATTPILOT_INIT_TIMEOUT
     global WATTPILOT_PASSWORD
+    global WATTPILOT_RECONNECT_INTERVAL
     global WATTPILOT_SPLIT_PROPERTIES
     HA_DISABLED_ENTITIES = os.environ.get('HA_DISABLED_ENTITIES', 'false')
     HA_ENABLED = os.environ.get('HA_ENABLED', 'false')
@@ -1119,6 +1172,7 @@ def main_setup_env():
     MQTT_MESSAGES = os.environ.get('MQTT_MESSAGES', '').split(sep=' ')
     MQTT_NOT_AVAILABLE_PAYLOAD = os.environ.get(
         'MQTT_NOT_AVAILABLE_PAYLOAD', 'offline')
+    MQTT_PASSWORD = os.environ.get('MQTT_PASSWORD', '')
     MQTT_PORT = int(os.environ.get('MQTT_PORT', '1883'))
     MQTT_PROPERTIES = os.environ.get('MQTT_PROPERTIES', '').split(sep=' ')
     MQTT_PUBLISH_MESSAGES = os.environ.get('MQTT_PUBLISH_MESSAGES', 'false')
@@ -1134,14 +1188,17 @@ def main_setup_env():
         'MQTT_TOPIC_PROPERTY_SET', '~/set')
     MQTT_TOPIC_PROPERTY_STATE = os.environ.get(
         'MQTT_TOPIC_PROPERTY_STATE', '~/state')
+    MQTT_USERNAME = os.environ.get('MQTT_USERNAME', '')
     WATTPILOT_AUTOCONNECT = os.environ.get('WATTPILOT_AUTOCONNECT', 'true')
+    WATTPILOT_AUTO_RECONNECT = os.environ.get('WATTPILOT_AUTO_RECONNECT', 'true')
     WATTPILOT_CONNECT_TIMEOUT = int(
         os.environ.get('WATTPILOT_CONNECT_TIMEOUT', '30'))
-    WATTPILOT_DEBUG_LEVEL = os.environ.get('WATTPILOT_DEBUG_LEVEL', 'INFO')
+    WATTPILOT_LOGLEVEL = os.environ.get('WATTPILOT_LOGLEVEL', 'INFO')
     WATTPILOT_HOST = os.environ.get('WATTPILOT_HOST', '')
     WATTPILOT_INIT_TIMEOUT = int(
         os.environ.get('WATTPILOT_INIT_TIMEOUT', '30'))
     WATTPILOT_PASSWORD = os.environ.get('WATTPILOT_PASSWORD', '')
+    WATTPILOT_RECONNECT_INTERVAL = int(os.environ.get('WATTPILOT_RECONNECT_INTERVAL', '30'))
     WATTPILOT_SPLIT_PROPERTIES = bool(
         os.environ.get('WATTPILOT_SPLIT_PROPERTIES', 'true'))
 
@@ -1154,7 +1211,7 @@ def main_setup_env():
 def main():
     global MQTT_ENABLED
     global WATTPILOT_AUTOCONNECT
-    global WATTPILOT_DEBUG_LEVEL
+    global WATTPILOT_LOGLEVEL
     global mqtt_client
     global wp
     global wpdef
@@ -1163,7 +1220,7 @@ def main():
     main_setup_env()
 
     # Set debug level:
-    logging.basicConfig(level=WATTPILOT_DEBUG_LEVEL)
+    logging.basicConfig(level=WATTPILOT_LOGLEVEL)
 
     # Initialize globals:
     mqtt_client = None
@@ -1174,13 +1231,13 @@ def main():
     wpsh = WattpilotShell()
     if WATTPILOT_AUTOCONNECT == 'true':
         _LOGGER.info("Automatically connecting to Wattpilot ...")
-        wpsh.onecmd('connect')
+        wpsh.do_connect("")
         # Enable MQTT and/or HA integration:
         if MQTT_ENABLED == "true" and HA_ENABLED == "false":
-            wpsh.onecmd('mqtt start')
+            wpsh.do_mqtt("start")
         elif MQTT_ENABLED == "true" and HA_ENABLED == "true":
-            wpsh.onecmd('ha start')
-        wpsh.onecmd('info')
+            wpsh.do_ha("start")
+        wpsh.do_info("")
     if len(sys.argv) < 2:
         wpsh.cmdloop()
     else:

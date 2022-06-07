@@ -2,3 +2,4 @@ websocket-client>=1.2.3
 PyYAML>=5.4.1
 pyreadline
 paho-mqtt
+cmd2>=2.4.1

@@ -3,6 +3,7 @@ requires = [
     "pyyaml>=5.4.1",
     "setuptools>=42",
     "wheel",
-    "paho-mqtt"
+    "paho-mqtt",
+    "cmd2>=2.4.1",
 ]
 build-backend = "setuptools.build_meta"
