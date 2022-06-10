@@ -23,10 +23,17 @@ See also:
 
 ```
 
+## config
+
+```bash
+Show configuration values
+Usage: config
+```
+
 ## connect
 
 ```bash
-Connect to Wattpilot (using WATTPILOT_* env variables)
+Connect to Wattpilot
 Usage: connect
 ```
 
@@ -35,6 +42,13 @@ Usage: connect
 ```bash
 Disconnect from Wattpilot
 Usage: disconnect
+```
+
+## docs
+
+```bash
+Show markdown documentation for environment variables
+Usage: docs
 ```
 
 ## edit
@@ -61,22 +75,6 @@ optional arguments:
 ```bash
 Exit the shell
 Usage: exit
-```
-
-## get
-
-```bash
-Get a property value
-Usage: get <propName>
-```
-
-## updateInverter
-
-```bash
-(un)pairs a connected inverter
-Usage: updateInverter (pair|unpair)  <inverterID>
-
-<inverterID> is normally in the form 123.456789
 ```
 
 ## ha
@@ -228,6 +226,20 @@ List property definitions and values
 Usage: properties [propRegex]
 ```
 
+## propget
+
+```bash
+Get a property value
+Usage: propget <propName>
+```
+
+## propset
+
+```bash
+Set a property value
+Usage: propset <propName> <value>
+```
+
 ## quit
 
 ```bash
@@ -296,8 +308,17 @@ Usage: server
 ## set
 
 ```bash
-Set a property value
-Usage: set <propName> <value>
+Usage: set [-h] [param] [value]
+
+Set a settable parameter or show current settings of parameters
+
+positional arguments:
+  param       parameter to set or view
+  value       new value for settable
+
+optional arguments:
+  -h, --help  show this help message and exit
+
 ```
 
 ## shell
@@ -333,6 +354,14 @@ optional arguments:
 ```bash
 Unwatch a message or property
 Usage: unwatch <event|message|property> <eventType|msgType|propName>
+```
+
+## UpdateInverter
+
+```bash
+Performs an Inverter Operation
+Usage: updateInverter pair|unpair <inverterID>
+<inverterID> is normally in the form 123.456789
 ```
 
 ## values
