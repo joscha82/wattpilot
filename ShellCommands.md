@@ -77,6 +77,22 @@ Exit the shell
 Usage: exit
 ```
 
+## get
+
+```bash
+Get a property value
+Usage: get <propName>
+```
+
+## updateInverter
+
+```bash
+(un)pairs a connected inverter
+Usage: updateInverter (pair|unpair)  <inverterID>
+
+<inverterID> is normally in the form 123.456789
+```
+
 ## ha
 
 ```bash
