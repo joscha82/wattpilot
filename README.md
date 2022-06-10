@@ -35,10 +35,10 @@ wattpilot> help
 
 Documented commands (use 'help -v' for verbose/'help <topic>' for details):
 ===========================================================================
-alias       EOF   help     mqtt        rawvalues     set        values
-connect     exit  history  properties  run_pyscript  shell      watch 
-disconnect  get   info     propset     run_script    shortcuts
-edit        ha    macro    quit        server        unwatch  
+alias       docs  ha       macro       propset       run_script  shortcuts
+config      edit  help     mqtt        quit          server      unwatch  
+connect     EOF   history  properties  rawvalues     set         values   
+disconnect  exit  info     propget     run_pyscript  shell       watch    
 ```
 
 The shell supports TAB-completion for all commands and their arguments.
@@ -144,40 +144,7 @@ docker-compose run wattpilot shell
 
 ## Environment Variables
 
-| Environment Variable        | Description                                                                                                                                                                                  | Default Value                                 |
-| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
-| `HA_ENABLED`                | Enable Home Assistant Discovery                                                                                                                                                              | `false`                                       |
-| `HA_PROPERTIES`             | Only discover given properties (leave unset for all properties having `homeAssistant` set in [wattpilot.yaml](src/wattpilot/ressources/wattpilot.yaml))                                                                               |                                               |
-| `HA_TOPIC_CONFIG`           | Topic pattern for HA discovery config                                                                                                                                                        | `homeassistant/{component}/{uniqueId}/config` |
-| `HA_WAIT_INIT_S`            | Wait initial number of seconds after starting discovery (in addition to wait time depending on the number of properties). May be increased, if entities in HA are not populated with values. | `5`                                           |
-| `HA_WAIT_PROPS_MS`          | Wait milliseconds per property after discovery before publishing property values. May be increased, if entities in HA are not populated with values.                                         | `50`                                          |
-| `MQTT_AVAILABLE_PAYLOAD`    | Payload for the availability topic in case the MQTT bridge is online                                                                                                                                                                                | `online`                              |
-| `MQTT_CLIENT_ID`            | MQTT client ID                                                                                                                                                                               | `wattpilot2mqtt`                              |
-| `MQTT_ENABLED`              | Enable MQTT                                                                                                                                                                                  | `false`                                       |
-| `MQTT_HOST`                 | MQTT host to connect to                                                                                                                                                                      |                                               |
-| `MQTT_MESSAGES`             | List of space-separated message types to be published to MQTT (leave unset for all messages)                                                                                                 |                                               |
-| `MQTT_NOT_AVAILABLE_PAYLOAD` | Payload for the availability topic in case the MQTT bridge is offline (last will message)                                                                                                                                                                               | `offline`                              |
-| `MQTT_PASSWORD`             | Password for connecting to MQTT                                                                                                                                               |                                               |
-| `MQTT_PORT`                 | Port of the MQTT host to connect to                                                                                                                                                          | `1883`                                        |
-| `MQTT_PROPERTIES`           | List of space-separated property names to publish changes for (leave unset for all properties)                                                                                               |                                               |
-| `MQTT_PUBLISH_MESSAGES`     | Publish received Wattpilot messages to MQTT                                                                                                                                                  | `false`                                       |
-| `MQTT_PUBLISH_PROPERTIES`   | Publish received property values to MQTT                                                                                                                                                     | `true`                                        |
-| `MQTT_TOPIC_AVAILABLE`      | Topic pattern to publish Wattpilot availability status to                                                                                                                                               | `{baseTopic}/available`          |
-| `MQTT_TOPIC_BASE`           | Base topic for MQTT                                                                                                                                                                          | `wattpilot`                                   |
-| `MQTT_TOPIC_MESSAGES`       | Topic pattern to publish Wattpilot messages to                                                                                                                                               | `{baseTopic}/messages/{messageType}`          |
-| `MQTT_TOPIC_PROPERTY_BASE`  | Base topic for properties                                                                                                                                                                    | `{baseTopic}/properties/{propName}`           |
-| `MQTT_TOPIC_PROPERTY_SET`   | Topic pattern to listen for property value changes for                                                                                                                                       | `~/set`                                       |
-| `MQTT_TOPIC_PROPERTY_STATE` | Topic pattern to publish property values to                                                                                                                                                  | `~/state`                                     |
-| `MQTT_USERNAME`             | Username for connecting to MQTT                                                                                                                                               |                                               |
-| `WATTPILOT_AUTOCONNECT`     | Automatically connect to Wattpilot on startup                                                                                                                                                | `true`                                        |
-| `WATTPILOT_AUTO_RECONNECT`  | Automatically re-connect to Wattpilot on lost connections                                                                                                                                            | `true`                                        |
-| `WATTPILOT_CONNECT_TIMEOUT` | Connect timeout for Wattpilot connection                                                                                                                                                     | `30`                                          |
-| `WATTPILOT_HOST`            | IP address of the Wattpilot device to connect to                                                                                                                                             |                                               |
-| `WATTPILOT_INIT_TIMEOUT`    | Wait timeout for property initialization                                                                                                                                                     | `30`                                          |
-| `WATTPILOT_LOGLEVEL`     | Log level (CRITICAL,ERROR,WARNING,INFO,DEBUG)                                                                                                                                                             | `INFO`                                        |
-| `WATTPILOT_PASSWORD`        | Password for connecting to the Wattpilot device                                                                                                                                              |                                               |
-| `WATTPILOT_RECONNECT_INTERVAL` | Waiting time in seconds before a lost connection is re-connected                                                                                                                                   | `30`                                          |
-| `WATTPILOT_SPLIT_PROPERTIES` | Whether compound properties (e.g. JSON arrays or objects) should be decomposed into separate properties                                                                                      | `true`                                        |
+For a complete list of supported environment variables see [ShellEnvVariables.md](ShellEnvVariables.md).
 
 ## HELP improving API definition in wattpilot.yaml
 

@@ -23,6 +23,13 @@ See also:
 
 ```
 
+## config
+
+```bash
+Show configuration values
+Usage: config
+```
+
 ## connect
 
 ```bash
@@ -35,6 +42,13 @@ Usage: connect
 ```bash
 Disconnect from Wattpilot
 Usage: disconnect
+```
+
+## docs
+
+```bash
+Show markdown documentation for environment variables
+Usage: docs
 ```
 
 ## edit
