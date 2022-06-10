@@ -498,7 +498,8 @@ Usage: propset <propName> <value>"""
 
     def do_UpdateInverter(self, arg: str) -> bool | None:
         """Performs an Inverter Operation
-Usage: updateInverter pair|unpair <inverterID>"""
+Usage: updateInverter pair|unpair <inverterID>
+<inverterID> is normally in the form 123.456789"""
         global wp
         global wpdef
         args = arg.split(' ')
