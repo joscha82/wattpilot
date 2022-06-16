@@ -44,8 +44,8 @@
 | `awpl`<br>`awattarPriceList` | Awattar Price List | R/W | `array`<br>`array` | Status | :white_large_square: | awattar price list, timestamps are measured in unix-time, seconds since 1970 | `[{"start": 1650567600, "end": 1650571200, "marketprice": 22.044}, {"start": 1650571200, "end": 1650574800, "marketprice": 19.971}]` |
 | `bac`<br>`buttonAllowCurrentChange` | Button Allow Current Change | R/W | `boolean`<br>`bool` | Config | :heavy_check_mark: | Button allow Current change | `true` |
 | `bam`<br>- |  |  | `boolean`<br>- |  | :white_large_square: |  | `true` |
-| `cae`<br>- |  |  | `boolean`<br>- |  | :white_large_square: |  | `false` |
-| `cak`<br>- |  |  | `string`<br>- |  | :white_large_square: |  | `""` |
+| `cae`<br>`cloudApiEnable` | Cloud API Enable | R/W | `boolean`<br>`bool` |  | :white_large_square: | Set to true, if you want to use the go-eCharger API at https://<serial number>.api.v3.go-e.io/api. | `false` |
+| `cak`<br>`cloudApiKey` | Cloud API Key | R/W | `string`<br>`string` |  | :white_large_square: | Contains the access token (32 characters) for the cloud API. Whenever you write anything to cak a new token is generated automatically. | `"Cjk4BWbH8EcTFtY6dsWvTYz6CjBxifeO"` |
 | `car`<br>`carState` | Car State | R | `integer`<br>`optional<uint8>` | Status | :heavy_check_mark: | carState, null if internal error (Unknown/Error=0, Idle=1, Charging=2, WaitCar=3, Complete=4, Error=5) | `1` |
 | `cards`<br>`registeredCards` | Registered Cards | R/W | `array`<br>`array` |  | :white_large_square: | Registered RFID cards for different users | `[{"name": "User 1", "energy": 0, "cardId": true}, {"name": "User 2", "energy": 0, "cardId": false}]` |
 | `cbl`<br>`cableCurrentLimit` | Cable Current Limit | R | `integer`<br>`optional<int>` | Status | :heavy_check_mark: | cable_current_limit in A | `20` |
@@ -99,7 +99,7 @@
 | `etop`<br>`energyTotalPersisted` | Energy Total Persisted | R | `integer`<br>`uint64` | Status | :heavy_check_mark: | energy_total persisted, measured in Wh, without the extra magic to have live values | `1076098` |
 | `facwak`<br>`factoryWifiApKey` | Factory Wifi AP Key | R | `string`<br>`string` | Constant | :white_large_square: | WiFi AccessPoint Key RESET VALUE (factory) | `true` |
 | `fam`<br>`pvBatteryLimit` | PV Battery Limit |  | `integer`<br>- |  | :white_large_square: | Battery limit for PV surplus charging | `20` |
-| `fap`<br>- |  |  | `boolean`<br>- |  | :white_large_square: |  | `false` |
+| `fap`<br>`froniusAllowPause` | Fronius Allow Pause | R/W | `boolean`<br>`bool` |  | :white_large_square: | Normally true. Set to false if your car disconnects when a charging pause occurs. Only VW ID.3/ID.4 seem to require this. | `false` |
 | `fbuf_age`<br>`fbufAge` | Fronius Age |  | `integer`<br>- |  | :white_large_square: |  | `93639347` |
 | `fbuf_akkuMode`<br>`akkuMode` | Battery Mode |  | `integer`<br>- |  | :white_large_square: |  | `1` |
 | `fbuf_akkuSOC`<br>`akkuSoc` | Battery SoC |  | `float`<br>- |  | :heavy_check_mark: | State of charge of the PV battery | `72.5` |
@@ -134,10 +134,10 @@
 | `fsp`<br>`forceSinglePhase` | Force Single Phase | R/W | `boolean`<br>`bool` | Status | :white_large_square: | force_single_phase (shows if currently single phase charge is enforced) | `false` |
 | `fsptws`<br>`forceSinglePhaseToggleWishedSince` | Force Single Phase Toggle Wished Since | R | `integer`<br>`optional<milliseconds>` | Status | :white_large_square: | force single phase toggle wished since | `28771782` |
 | `fst`<br>`startingPower` | Starting Power | R/W | `float`<br>`float` | Config | :heavy_check_mark: | startingPower in watts. This is the minimum power at which charging can be started. | `1400` |
-| `fte`<br>- |  |  | `integer`<br>- |  | :white_large_square: |  | `50000` |
+| `fte`<br>`froniusTripEnergy` | Fronius Trip Energy | R/W | `integer`<br>`int` |  | :white_large_square: | Minimum energy in Watthours to charge in next trip mode. | `50000` |
 | `ftlf`<br>- |  |  | `boolean`<br>- |  | :white_large_square: |  | `false` |
 | `ftls`<br>- |  |  | `unknown`<br>- |  | :white_large_square: |  | `null` |
-| `ftt`<br>- |  |  | `integer`<br>- |  | :white_large_square: |  | `25200` |
+| `ftt`<br>`froniusTripTime` | Fronius Trip Time | R/W | `integer`<br>`int` |  | :white_large_square: | Starting time of your next trip in seconds from midnight local time. 3600 = 01:00 am local time | `25200` |
 | `ful`<br>`useDynamicPricing` | useDynamicPricing |  | `boolean`<br>- |  | :white_large_square: | Uses dynamic electricity pricing (Lumina, aWattar) | `false` |
 | `fup`<br>`usePvSurplus` | PV Surplus | R/W | `boolean`<br>`bool` | Config | :white_large_square: | Use PV surplus charging | `true` |
 | `fwan`<br>`factoryWifiApName` | Factory WiFi AP Name | R | `string`<br>`string` | Constant | :white_large_square: | factoryWifiApName | `"Wattpilot_<some_serialnr>"` |
