@@ -287,6 +287,7 @@ properties:
     category: Config
     description: ampere_max limit
     homeAssistant:
+      component: sensor
       config:
         device_class: current
         unit_of_measurement: A
@@ -574,7 +575,7 @@ properties:
     category: Config
     description: car consumption in kWh for 100km (only stored for app)
     homeAssistant:
-      component: number
+      component: sensor
       config:
         device_class: energy
         unit_of_measurement: kWh
@@ -837,7 +838,7 @@ properties:
       charging energy limit, measured in Wh, null means disabled, not the
       next trip energy
     homeAssistant:
-      component: number
+      component: sensor
       config:
         device_class: energy
         state_class: total
@@ -1393,7 +1394,7 @@ properties:
     type: float
     category: Config
     homeAssistant:
-      component: number
+      component: sensor
       config:
         device_class: power
         unit_of_measurement: W
