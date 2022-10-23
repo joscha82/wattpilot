@@ -1651,7 +1651,7 @@ properties:
     rw: R/W
     type: uint8
     category: Config
-    description: logic mode (Default=3, Awattar=4, AutomaticStop=5)
+    description: logic mode (Default=3, Eco=4, Next Trip=5)
     valueMap:
       "3": Default
       "4": Eco
