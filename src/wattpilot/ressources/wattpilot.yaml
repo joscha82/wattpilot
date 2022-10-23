@@ -1654,8 +1654,8 @@ properties:
     description: logic mode (Default=3, Awattar=4, AutomaticStop=5)
     valueMap:
       "3": Default
-      "4": Awattar
-      "5": AutomaticStop
+      "4": Eco
+      "5": Next Trip
     homeAssistant:
       component: select
   - key: lmsc
