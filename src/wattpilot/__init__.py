@@ -7,6 +7,7 @@ import hmac
 import logging
 import base64
 
+from enum import Enum, auto
 from time import sleep
 from types import SimpleNamespace
 
@@ -19,30 +20,29 @@ class LoadMode():
     NEXTTRIP=5
 
 
-class Wattpilot(object):
+class Event(Enum):
+    # Wattpilot events:
+    WP_AUTH = auto(),
+    WP_AUTH_ERROR = auto(),
+    WP_AUTH_SUCCESS = auto(),
+    WP_CLEAR_INVERTERS = auto(),
+    WP_CONNECT = auto(),
+    WP_DELTA_STATUS = auto(),
+    WP_DISCONNECT = auto(),
+    WP_FULL_STATUS = auto(),
+    WP_FULL_STATUS_FINISHED = auto(),
+    WP_HELLO = auto(),
+    WP_INIT = auto(),
+    WP_PROPERTY = auto(),
+    WP_RESPONSE = auto(),
+    WP_UPDATE_INVERTER = auto(),
+    # WebSocketApp events:
+    WS_CLOSE = auto(),
+    WS_ERROR = auto(),
+    WS_MESSAGE = auto(),
+    WS_OPEN = auto(),
 
-    supported_events = [
-        # Wattpilot events:
-        "wp_auth",
-        "wp_authError",
-        "wp_authSuccess",
-        "wp_clearInverters",
-        "wp_connect",
-        "wp_deltaStatus",
-        "wp_disconnect",
-        "wp_fullStatus",
-        "wp_fullStatus_finished",
-        "wp_hello",
-        "wp_init",
-        "wp_property",
-        "wp_response",
-        "wp_updateInverter",
-        # WebSocketApp events:
-        "ws_close",
-        "ws_error",
-        "ws_message",
-        "ws_open",
-    ]
+class Wattpilot(object):
     
     carValues = {}
     alwValues = {}
@@ -304,17 +304,23 @@ class Wattpilot(object):
         self._wst = threading.Thread(target=self._wsapp.run_forever)
         self._wst.daemon = True
         self._wst.start()
-        self.__call_event_handler("wp_connect")
+        self.__call_event_handler(Event.WP_CONNECT)
         _LOGGER.info("Wattpilot connected")
 
-    def disconnect(self):
+    def disconnect(self, auto_reconnect=False):
         self._wsapp.close()
         self._connected=False
-        self._auto_reconnect=False # Do not reconnect on explicit disconnect
-        self.__call_event_handler("wp_disconnect")
+        self._auto_reconnect = auto_reconnect
+        self.__call_event_handler(Event.WP_DISCONNECT)
         _LOGGER.info("Wattpilot disconnected")
 
     # Wattpilot Event Handling
+
+    # def __init_event_handler():
+    #     eh = {}
+    #     for event_type in list(Event):
+    #         eh[event_type.value] = []
+    #     return eh
 
     def add_event_handler(self,event_type,callback_fn):
         if event_type not in self._event_handler:
@@ -327,6 +333,8 @@ class Wattpilot(object):
 
     def __call_event_handler(self, event_type, *args):
         _LOGGER.debug(f"Calling event handler for event type '{event_type} ...")
+        if event_type not in self._event_handler:
+            return
         for callback_fn in self._event_handler[event_type]:
             event = {
                 "type": event_type,
@@ -450,7 +458,7 @@ class Wattpilot(object):
                 self._updateAvailable = False
             else:
                 self._updateAvailable = True
-        self.__call_event_handler("wp_property",name,value)
+        self.__call_event_handler(Event.WP_PROPERTY, name, value)
 
     def __on_hello(self,message):
         _LOGGER.info("Connected to WattPilot Serial %s",message.serial)
@@ -466,7 +474,7 @@ class Wattpilot(object):
         self._protocol=message.protocol
         if hasattr(message,"secured"):
             self._secured=message.secured
-        self.__call_event_handler("wp_hello",message)
+        self.__call_event_handler(Event.WP_HELLO, message)
 
     def __on_auth(self,wsapp,message):
         ran = random.randrange(10**80)
@@ -479,7 +487,7 @@ class Wattpilot(object):
         response["token3"] = self._token3
         response["hash"] = hash
         self.__send(response)
-        self.__call_event_handler("wp_auth",message)
+        self.__call_event_handler(Event.WP_AUTH, message)
 
     def __send(self,message,secure=False):
         # If the  connection to wattpilot is over a unsecure channel (http) all send messages are wrapped in
@@ -500,36 +508,35 @@ class Wattpilot(object):
 
     def __on_AuthSuccess(self,message):
         self._connected = True
-        self.__call_event_handler("wp_authSuccess",message)
+        self.__call_event_handler(Event.WP_AUTH_SUCCESS, message)
         _LOGGER.info("Authentication successful")
 
     def __on_FullStatus(self,message):
         props = message.status.__dict__
         for key in props:
             self.__update_property(key,props[key])
-        self.__call_event_handler("wp_fullStatus",message)
+        self.__call_event_handler(Event.WP_FULL_STATUS, message)
         self._allPropsInitialized = not message.partial
         if message.partial == False:
-            self.__call_event_handler("wp_fullStatus_finished",message)
+            self.__call_event_handler(Event.WP_FULL_STATUS_FINISHED, message)
 
     def __on_AuthError(self,message):
         if message.message=="Wrong password":
             self._wsapp.close()
-            _LOGGER.error("Authentication failed: %s" , message.message)
-        self.__call_event_handler("wp_authError",message)
+            _LOGGER.error("Authentication failed: %s", message.message)
+        self.__call_event_handler(Event.WP_AUTH_ERROR, message)
 
     def __on_DeltaStatus(self,message):
         props = message.status.__dict__
         for key in props:
             self.__update_property(key,props[key])
-        self.__call_event_handler("wp_deltaStatus",message)
-
+        self.__call_event_handler(Event.WP_DELTA_STATUS, message)
 
     def __on_clearInverters(self,message):
-        self.__call_event_handler("wp_clearInverters",message)
+        self.__call_event_handler(Event.WP_CLEAR_INVERTERS, message)
 
     def __on_updateInverter(self,message):
-        self.__call_event_handler("wp_updateInverter",message)
+        self.__call_event_handler(Event.WP_UPDATE_INVERTER, message)
 
     def __on_response(self,message):
         if message.success:
@@ -539,18 +546,18 @@ class Wattpilot(object):
                     self.__update_property(key,props[key])
         else:
             _LOGGER.error("Error Sending Request %s. Message: %s" ,message.requestId,message.message)
-        self.__call_event_handler("wp_response",message)
+        self.__call_event_handler(Event.WP_RESPONSE, message)
 
     def __on_open(self,wsapp):
-        self.__call_event_handler("ws_open",wsapp)
+        self.__call_event_handler(Event.WS_OPEN, wsapp)
 
     def __on_error(self,wsapp,err):
-        self.__call_event_handler("ws_error",wsapp,err)
+        self.__call_event_handler(Event.WS_ERROR, wsapp, err)
         _LOGGER.error(f"Error received from WebSocketApp: {err}")
 
     def __on_close(self,wsapp,code,msg):
         self._connected=False
-        self.__call_event_handler("ws_close",wsapp,code,msg)
+        self.__call_event_handler(Event.WS_CLOSE, wsapp, code, msg)
         if (self._auto_reconnect):
             sleep(self._reconnect_interval)
             self._wsapp.run_forever()
@@ -559,7 +566,7 @@ class Wattpilot(object):
         ## called whenever a message through websocket is received
         _LOGGER.debug("Message received: %s", message)
         msg=json.loads(message, object_hook=lambda d: SimpleNamespace(**d))
-        self.__call_event_handler("ws_message",message)
+        self.__call_event_handler(Event.WS_MESSAGE, message)
         if (msg.type == 'hello'):  # Hello Message -> Received upon connection before auth
             self.__on_hello(msg)
         if (msg.type == 'authRequired'): # Auth Required -> Received after hello 
@@ -578,7 +585,6 @@ class Wattpilot(object):
             self.__on_clearInverters(msg)
         if (msg.type == 'updateInverter'): # Contains information of connected Photovoltaik inverter / powermeter
             self.__on_updateInverter(msg)
-
 
     def __init__(self, ip ,password,serial=None,cloud=False):
         self._auto_reconnect = True
@@ -627,10 +633,7 @@ class Wattpilot(object):
         self._carConnected=None
         self._cae=None
         self._cak=None
-        # Initialize callback lists:
         self._event_handler = {}
-        for event_type in self.supported_events:
-            self._event_handler[event_type] = []
 
         self._wst=threading.Thread()
 
@@ -642,6 +645,6 @@ class Wattpilot(object):
             on_message=self.__on_message,
             on_open=self.__on_open,
         )
-        self.__call_event_handler("wp_init")
+        self.__call_event_handler(Event.WP_INIT)
         _LOGGER.info ("Wattpilot %s initialized",self.serial)
 

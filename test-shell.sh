@@ -18,7 +18,7 @@ function runShell() {
 }
 
 function runShellOnly() {
-    WATTPILOT_AUTOCONNECT=false MQTT_ENABLED=false HA_ENABLED=false runShell "${@}"
+    WATTPILOT_AUTOCONNECT=false MQTT_ENABLED=false HA_ENABLED=false WATTPILOT_LOGLEVEL=WARN runShell "${@}"
 }
 
 function runShellWithProps() {
@@ -84,7 +84,7 @@ case "${cmd}" in
             echo "# Wattpilot Shell Commands"
             for cmd in $(
                 runShellOnly "help" \
-                | awk 'BEGIN {p=0} {if(p) print $0} /^==/ {p=1}' \
+                | grep -v -E '^(===+|.*:)$' \
                 | xargs -n 1 echo \
                 | grep -E -v '^EOF$' \
                 | sort \
@@ -98,19 +98,9 @@ case "${cmd}" in
             done
         ) >ShellCommands.md
         (
-            # NOTE: The file cannot yet fully replace the table in README.md since the description is missing
             echo "# Wattpilot Shell Environment Variables"
             echo ""
-            echo "| Environment Variable | Default Value |"
-            echo "|----------------------|---------------|"
-            cat src/wattpilot/wattpilotshell.py \
-            | awk 'BEGIN {p=0} /^ +/ {if(p) print $0} /^def / {p=0} /^def main_setup_env\(\):/ {p=1}' \
-            | grep -E -v '\b(global|assert)\b' \
-            | sed -re 's/#.*//g;s/\n//g' \
-            | tr '\n' ' ' \
-            | sed -re "s/os\\.environ\\.get\\(\\s*'([A-Z_]+)'\\s*,\\s*'([^']*)'\\s*\\)/\n| \`\1\` | \`\2\` |\n/g; s/\`\`//g" \
-            | grep -E '^\|' \
-            | sort
+            runShellOnly docs
         ) >ShellEnvVariables.md
     ;;
     validate-yaml)
