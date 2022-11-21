@@ -451,8 +451,15 @@ properties:
       config:
         entity_category: config
   - key: bam
+    alias: buttonAllowMode
+    title: Button Allow mode change
     jsonType: boolean
     example: true
+    rw: R/W
+    type: bool
+    category: Status
+    description: Allow mode change via hardware button on Wattpilot
+    homeAssistant:
   - key: cae
     alias: cloudApiEnable
     title: Cloud API Enable
@@ -1336,8 +1343,15 @@ properties:
     jsonType: boolean
     example: true
   - key: fre
+    alias: froniusRemainEco
+    title: Remain Eco
     jsonType: boolean
-    example: false
+    example: true
+    rw: R/W
+    type: bool
+    category: Status
+    description: Remain in Eco mode after next trip minimum energy has been charged into to the car
+    homeAssistant:
   - key: frm
     alias: roundingMode
     title: Rounding Mode
