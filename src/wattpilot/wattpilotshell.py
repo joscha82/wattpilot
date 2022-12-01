@@ -859,10 +859,10 @@ def mqtt_set_value(client, userdata, message):
     pd = wpdef["properties"][name]
     if pd['rw'] == "R":
         _LOGGER.warning(f"Property '{name}' is not writable!")
-    try:
-        value = int(mqtt_get_decoded_property(pd, str(message.payload.decode("utf-8"))))
-    except ValueError:
-        value = mqtt_get_decoded_property(pd, str(message.payload.decode("utf-8")))
+    #try:
+    #    value = int(mqtt_get_decoded_property(pd, str(message.payload.decode("utf-8"))))
+    #except ValueError:
+    value = mqtt_get_decoded_property(pd, str(message.payload.decode("utf-8")))
     _LOGGER.info(
         f"MQTT Message received: topic={message.topic}, name={name}, value={value}")
     wp.send_update(name, value)
