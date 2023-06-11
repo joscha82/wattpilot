@@ -277,6 +277,8 @@ properties:
     category: Status
     description: Is the car allowed to charge at all now?
     homeAssistant:
+      config:
+        entity_category: config
   - key: ama
     alias: maxCurrentLimit
     title: Max Current Limit
@@ -2038,6 +2040,7 @@ properties:
       Total), pf (L1, L2, L3, N)
     homeAssistant:
       config:
+#        enabled_by_default: false
         enabled_by_default: true
     childProps:
       - key: nrg_ul1
