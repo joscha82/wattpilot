@@ -207,6 +207,204 @@ properties:
   - key: abm
     jsonType: string
     example: <SOME_MAC>
+  - key: acl
+    jsonType: unknown
+    example: null
+  - key: lwf
+    jsonType: unknown
+    example: null
+  - key: ets
+    jsonType: unknown
+    example: null
+  - key: wsl
+    jsonType: unknown
+    example: null
+  - key: tsks
+    jsonType: unknown
+    example: null
+  - key: pass
+    jsonType: unknown
+    example: null
+  - key: tzt
+    jsonType: unknown
+    example: null
+  - key: tcl
+    jsonType: unknown
+    example: null
+  - key: die
+    jsonType: unknown
+    example: null
+  - key: dii
+    jsonType: unknown
+    example: null
+  - key: ocppcs
+    jsonType: unknown
+    example: null
+  - key: la1
+    jsonType: unknown
+    example: null
+  - key: la3
+    jsonType: unknown
+    example: null
+  - key: di1
+    jsonType: unknown
+    example: null
+  - key: pgr
+    jsonType: unknown
+    example: null
+  - key: pdi
+    jsonType: unknown
+    example: null
+  - key: cy
+    jsonType: unknown
+    example: null
+  - key: mukw
+    jsonType: unknown
+    example: null
+  - key: rdbs
+    jsonType: unknown
+    example: null
+  - key: rdes
+    jsonType: unknown
+    example: null
+  - key: rdbf
+    jsonType: unknown
+    example: null
+  - key: rdef
+    jsonType: unknown
+    example: null
+  - key: rdre
+    jsonType: unknown
+    example: null
+  - key: rdpl
+    jsonType: unknown
+    example: null
+  - key: rdbse
+    jsonType: unknown
+    example: null
+  - key: rdese
+    jsonType: unknown
+    example: null
+  - key: rdbfe
+    jsonType: unknown
+    example: null
+  - key: rdefe
+    jsonType: unknown
+    example: null
+  - key: rdree
+    jsonType: unknown
+    example: null
+  - key: rdple
+    jsonType: unknown
+    example: null
+  - key: t0h
+    jsonType: unknown
+    example: null
+  - key: t1h
+    jsonType: unknown
+    example: null
+  - key: t0l
+    jsonType: unknown
+    example: null
+  - key: t1l
+    jsonType: unknown
+    example: null
+  - key: opad
+    jsonType: unknown
+    example: null
+  - key: clea
+    jsonType: unknown
+    example: null
+  - key: cle
+    jsonType: unknown
+    example: null
+  - key: facice
+    jsonType: unknown
+    example: null
+  - key: ice
+    jsonType: unknown
+    example: null
+  - key: slca
+    jsonType: unknown
+    example: null
+  - key: rcc
+    jsonType: unknown
+    example: null
+  - key: rill
+    jsonType: unknown
+    example: null
+  - key: cup
+    jsonType: unknown
+    example: null
+  - key: ocppg
+    jsonType: unknown
+    example: null
+  - key: ocppcn
+    jsonType: unknown
+    example: null
+  - key: ocppss
+    jsonType: unknown
+    example: null
+  - key: ocppa
+    jsonType: unknown
+    example: null
+  - key: ocppaa
+    jsonType: unknown
+    example: null
+  - key: ocppti
+    jsonType: unknown
+    example: null
+  - key: ocppao
+    jsonType: unknown
+    example: null
+  - key: ocpplo
+    jsonType: unknown
+    example: null
+  - key: ocppla
+    jsonType: unknown
+    example: null
+  - key: ocppai
+    jsonType: unknown
+    example: null
+  - key: ocppd
+    jsonType: unknown
+    example: null
+  - key: ocppr
+    jsonType: unknown
+    example: null
+  - key: ocppcm
+    jsonType: unknown
+    example: null
+  - key: ocpplea
+    jsonType: unknown
+    example: null
+  - key: ocpple
+    jsonType: unknown
+    example: null
+  - key: ocpprl
+    jsonType: unknown
+    example: null
+  - key: ocppck
+    jsonType: unknown
+    example: null
+  - key: ocppcc
+    jsonType: unknown
+    example: null
+  - key: ocppsc
+    jsonType: unknown
+    example: null
+  - key: rfe
+    jsonType: unknown
+    example: null
+  - key: rde
+    jsonType: unknown
+    example: null
+  - key: tsi
+    jsonType: unknown
+    example: null
+  - key: ipw
+    jsonType: unknown
+    example: null
   - key: acs
     alias: accessState
     title: Access State

@@ -677,8 +677,8 @@ Usage: watch <event|message|property> <eventType|msgType|propName>"""
         value_regex = '.*'
         if len(args) > 1:
             value_regex = args[1]
-        props = {k: v for k, v in props.items() if re.match(r'^'+value_regex+'$',
-                                                            str(mqtt_get_encoded_property(self.wpdef["properties"][k], v)), flags=re.IGNORECASE)}
+        props = {k: v for k, v in props.items() if k in self.wpdef["properties"] if re.match(r'^'+value_regex+'$',
+                                                                                             str(mqtt_get_encoded_property(self.wpdef["properties"][k], v)), flags=re.IGNORECASE)}
         return props
 
 
