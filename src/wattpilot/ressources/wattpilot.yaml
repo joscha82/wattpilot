@@ -621,6 +621,7 @@ properties:
     category: Config
     description: awattarMaxPrice in ct
     homeAssistant:
+      component: number
       config:
         entity_category: config
   - key: awpl
@@ -745,9 +746,6 @@ properties:
     type: string
     category: Config
     description: "color_charging, format: #RRGGBB"
-    homeAssistant:
-      config:
-        entity_category: config
   - key: cci
     jsonType: object
     example:
@@ -776,7 +774,7 @@ properties:
     category: Config
     description: car consumption in kWh for 100km (only stored for app)
     homeAssistant:
-      component: sensor
+      component: number
       config:
         device_class: energy
         unit_of_measurement: kWh
@@ -1532,9 +1530,6 @@ properties:
     title: Ohmpilot Temperature Limit
     jsonType: integer
     example: 20
-    homeAssistant:
-      config:
-        entity_category: config
   - key: frc
     alias: forceState
     title: Force State
@@ -1550,6 +1545,8 @@ properties:
       "2": "On"
     homeAssistant:
       component: select
+      config:
+        entity_category: config
   - key: frci
     jsonType: boolean
     example: true
@@ -1563,6 +1560,9 @@ properties:
     category: Status
     description: Remain in Eco mode after next trip minimum energy has been charged into to the car
     homeAssistant:
+      component: switch
+      config:
+        entity_category: config
   - key: frm
     alias: roundingMode
     title: Rounding Mode
