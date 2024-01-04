@@ -996,10 +996,11 @@ def ha_discover_property(wp, mqtt_client, pd, disable_discovery=False, force_ena
     _LOGGER.debug(
         f"Publishing property '{name}' to {topic_cfg}: {payload}")
     mqtt_client.publish(topic_cfg, payload, retain=True)
-    # Publish additional read-only sensor for special rw properties:
+    # Publish additional read-only sensor with category diagnostic for special rw properties:
     if pd.get("rw", "") == "R/W" and component != "sensor":
         if payload != "":
             del ha_discovery_config["command_topic"]
+            ha_discovery_config["entity_category"] = "diagnostic"
             payload = utils_value2json(ha_discovery_config)
         mqtt_client.publish(mqtt_subst_topic(Cfg.HA_TOPIC_CONFIG.val, topic_subst_map | {
                             "component": "sensor"}), payload, retain=True)

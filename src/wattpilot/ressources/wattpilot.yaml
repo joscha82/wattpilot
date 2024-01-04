@@ -491,7 +491,7 @@ properties:
       config:
         device_class: current
         unit_of_measurement: A
-        entity_category: config
+        entity_category: diagnostic
   - key: amp
     alias: chargingCurrent
     title: Charging Current
@@ -723,6 +723,7 @@ properties:
       config:
         device_class: current
         unit_of_measurement: A
+        entity_category: diagnostic
   - key: cbm
     jsonType: unknown
     example: null
@@ -779,6 +780,7 @@ properties:
       config:
         device_class: energy
         unit_of_measurement: kWh
+        entity_category: diagnostic
   - key: ccrv
     alias: chargeControllerRecommendedVersion
     title: Charge Controller Recommended Version
@@ -1043,6 +1045,8 @@ properties:
         device_class: energy
         state_class: total
         unit_of_measurement: Wh
+        value_template: "{{ value | float(default=None) }}"
+        entity_category: diagnostic
   - key: ecf
     alias: espCpuFreq
     title: ESP CPU Frequency
@@ -1292,6 +1296,7 @@ properties:
         device_class: energy
         state_class: total
         unit_of_measurement: Wh
+        entity_category: diagnostic
   - key: etop
     alias: energyTotalPersisted
     title: Energy Total Persisted
@@ -1309,6 +1314,7 @@ properties:
         device_class: energy
         state_class: total
         unit_of_measurement: Wh
+        entity_category: diagnostic
   - key: facwak
     alias: factoryWifiApKey
     title: Factory Wifi AP Key
@@ -1354,6 +1360,7 @@ properties:
         device_class: battery
         unit_of_measurement: "%"
         value_template: "{{ value | float | round(1) }}"
+        entity_category: diagnostic
   - key: fbuf_ohmpilotState
     alias: ohmpilotState
     title: Ohmpilot State
@@ -1380,6 +1387,7 @@ properties:
       config:
         device_class: power
         unit_of_measurement: W
+        entity_category: diagnostic
   - key: fbuf_pGrid
     alias: powerGrid
     title: Power Grid
@@ -1392,6 +1400,7 @@ properties:
         device_class: power
         unit_of_measurement: W
         value_template: "{{ value | float | round(2) }}"
+        entity_category: diagnostic
   - key: fbuf_pPv
     alias: powerPv
     title: Power PV
@@ -1403,6 +1412,7 @@ properties:
       config:
         device_class: power
         unit_of_measurement: W
+        entity_category: diagnostic
   - key: fcc
     jsonType: boolean
     example: true
@@ -1601,6 +1611,7 @@ properties:
         min: 1400
         max: 11000
         step: 100
+        entity_category: diagnostic
   - key: fte
     alias: froniusTripEnergy
     title: Fronius Trip Energy
@@ -1667,6 +1678,8 @@ properties:
     category: Constant
     homeAssistant:
       component: sensor
+      config:
+        entity_category: diagnostic
   - key: fzf
     alias: zeroFeedin
     title: Zero Feedin
@@ -2847,6 +2860,7 @@ properties:
         device_class: signal_strength
         unit_of_measurement: dBm
         enabled_by_default: false # Disabled by default due to high volume updates
+        entity_category: diagnostic
   - key: rst
     alias: rebootCharger
     title: Reboot Charger
@@ -3054,6 +3068,8 @@ properties:
     description: serial number
     homeAssistant:
       component: sensor
+      config:
+        entity_category: diagnostic
   - key: stao
     jsonType: unknown
     example: null
@@ -3417,6 +3433,7 @@ properties:
         device_class: energy
         state_class: total
         unit_of_measurement: Wh
+        entity_category: diagnostic
   - key: wifis
     alias: wifiConfigs
     title: WiFi Configs
