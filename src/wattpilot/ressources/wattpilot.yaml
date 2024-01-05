@@ -475,8 +475,7 @@ properties:
     category: Status
     description: Is the car allowed to charge at all now?
     homeAssistant:
-      config:
-        entity_category: config
+      
   - key: ama
     alias: maxCurrentLimit
     title: Max Current Limit
@@ -1522,6 +1521,8 @@ properties:
     category: Config
     description: friendlyName
     homeAssistant:
+      config:
+        entity_category: diagnostic
   - key: fntp
     jsonType: unknown
     example: null
