@@ -207,6 +207,204 @@ properties:
   - key: abm
     jsonType: string
     example: <SOME_MAC>
+  - key: acl
+    jsonType: unknown
+    example: null
+  - key: lwf
+    jsonType: unknown
+    example: null
+  - key: ets
+    jsonType: unknown
+    example: null
+  - key: wsl
+    jsonType: unknown
+    example: null
+  - key: tsks
+    jsonType: unknown
+    example: null
+  - key: pass
+    jsonType: unknown
+    example: null
+  - key: tzt
+    jsonType: unknown
+    example: null
+  - key: tcl
+    jsonType: unknown
+    example: null
+  - key: die
+    jsonType: unknown
+    example: null
+  - key: dii
+    jsonType: unknown
+    example: null
+  - key: ocppcs
+    jsonType: unknown
+    example: null
+  - key: la1
+    jsonType: unknown
+    example: null
+  - key: la3
+    jsonType: unknown
+    example: null
+  - key: di1
+    jsonType: unknown
+    example: null
+  - key: pgr
+    jsonType: unknown
+    example: null
+  - key: pdi
+    jsonType: unknown
+    example: null
+  - key: cy
+    jsonType: unknown
+    example: null
+  - key: mukw
+    jsonType: unknown
+    example: null
+  - key: rdbs
+    jsonType: unknown
+    example: null
+  - key: rdes
+    jsonType: unknown
+    example: null
+  - key: rdbf
+    jsonType: unknown
+    example: null
+  - key: rdef
+    jsonType: unknown
+    example: null
+  - key: rdre
+    jsonType: unknown
+    example: null
+  - key: rdpl
+    jsonType: unknown
+    example: null
+  - key: rdbse
+    jsonType: unknown
+    example: null
+  - key: rdese
+    jsonType: unknown
+    example: null
+  - key: rdbfe
+    jsonType: unknown
+    example: null
+  - key: rdefe
+    jsonType: unknown
+    example: null
+  - key: rdree
+    jsonType: unknown
+    example: null
+  - key: rdple
+    jsonType: unknown
+    example: null
+  - key: t0h
+    jsonType: unknown
+    example: null
+  - key: t1h
+    jsonType: unknown
+    example: null
+  - key: t0l
+    jsonType: unknown
+    example: null
+  - key: t1l
+    jsonType: unknown
+    example: null
+  - key: opad
+    jsonType: unknown
+    example: null
+  - key: clea
+    jsonType: unknown
+    example: null
+  - key: cle
+    jsonType: unknown
+    example: null
+  - key: facice
+    jsonType: unknown
+    example: null
+  - key: ice
+    jsonType: unknown
+    example: null
+  - key: slca
+    jsonType: unknown
+    example: null
+  - key: rcc
+    jsonType: unknown
+    example: null
+  - key: rill
+    jsonType: unknown
+    example: null
+  - key: cup
+    jsonType: unknown
+    example: null
+  - key: ocppg
+    jsonType: unknown
+    example: null
+  - key: ocppcn
+    jsonType: unknown
+    example: null
+  - key: ocppss
+    jsonType: unknown
+    example: null
+  - key: ocppa
+    jsonType: unknown
+    example: null
+  - key: ocppaa
+    jsonType: unknown
+    example: null
+  - key: ocppti
+    jsonType: unknown
+    example: null
+  - key: ocppao
+    jsonType: unknown
+    example: null
+  - key: ocpplo
+    jsonType: unknown
+    example: null
+  - key: ocppla
+    jsonType: unknown
+    example: null
+  - key: ocppai
+    jsonType: unknown
+    example: null
+  - key: ocppd
+    jsonType: unknown
+    example: null
+  - key: ocppr
+    jsonType: unknown
+    example: null
+  - key: ocppcm
+    jsonType: unknown
+    example: null
+  - key: ocpplea
+    jsonType: unknown
+    example: null
+  - key: ocpple
+    jsonType: unknown
+    example: null
+  - key: ocpprl
+    jsonType: unknown
+    example: null
+  - key: ocppck
+    jsonType: unknown
+    example: null
+  - key: ocppcc
+    jsonType: unknown
+    example: null
+  - key: ocppsc
+    jsonType: unknown
+    example: null
+  - key: rfe
+    jsonType: unknown
+    example: null
+  - key: rde
+    jsonType: unknown
+    example: null
+  - key: tsi
+    jsonType: unknown
+    example: null
+  - key: ipw
+    jsonType: unknown
+    example: null
   - key: acs
     alias: accessState
     title: Access State
@@ -277,6 +475,7 @@ properties:
     category: Status
     description: Is the car allowed to charge at all now?
     homeAssistant:
+      
   - key: ama
     alias: maxCurrentLimit
     title: Max Current Limit
@@ -287,10 +486,11 @@ properties:
     category: Config
     description: ampere_max limit
     homeAssistant:
+      component: sensor
       config:
         device_class: current
         unit_of_measurement: A
-        entity_category: config
+        entity_category: diagnostic
   - key: amp
     alias: chargingCurrent
     title: Charging Current
@@ -420,6 +620,7 @@ properties:
     category: Config
     description: awattarMaxPrice in ct
     homeAssistant:
+      component: number
       config:
         entity_category: config
   - key: awpl
@@ -522,6 +723,7 @@ properties:
       config:
         device_class: current
         unit_of_measurement: A
+        entity_category: diagnostic
   - key: cbm
     jsonType: unknown
     example: null
@@ -543,9 +745,6 @@ properties:
     type: string
     category: Config
     description: "color_charging, format: #RRGGBB"
-    homeAssistant:
-      config:
-        entity_category: config
   - key: cci
     jsonType: object
     example:
@@ -578,6 +777,7 @@ properties:
       config:
         device_class: energy
         unit_of_measurement: kWh
+        entity_category: diagnostic
   - key: ccrv
     alias: chargeControllerRecommendedVersion
     title: Charge Controller Recommended Version
@@ -837,11 +1037,13 @@ properties:
       charging energy limit, measured in Wh, null means disabled, not the
       next trip energy
     homeAssistant:
-      component: number
+      component: sensor
       config:
         device_class: energy
         state_class: total
         unit_of_measurement: Wh
+        value_template: "{{ value | float(default=None) }}"
+        entity_category: diagnostic
   - key: ecf
     alias: espCpuFreq
     title: ESP CPU Frequency
@@ -1091,6 +1293,7 @@ properties:
         device_class: energy
         state_class: total
         unit_of_measurement: Wh
+        entity_category: diagnostic
   - key: etop
     alias: energyTotalPersisted
     title: Energy Total Persisted
@@ -1108,6 +1311,7 @@ properties:
         device_class: energy
         state_class: total
         unit_of_measurement: Wh
+        entity_category: diagnostic
   - key: facwak
     alias: factoryWifiApKey
     title: Factory Wifi AP Key
@@ -1153,6 +1357,7 @@ properties:
         device_class: battery
         unit_of_measurement: "%"
         value_template: "{{ value | float | round(1) }}"
+        entity_category: diagnostic
   - key: fbuf_ohmpilotState
     alias: ohmpilotState
     title: Ohmpilot State
@@ -1179,6 +1384,7 @@ properties:
       config:
         device_class: power
         unit_of_measurement: W
+        entity_category: diagnostic
   - key: fbuf_pGrid
     alias: powerGrid
     title: Power Grid
@@ -1191,6 +1397,7 @@ properties:
         device_class: power
         unit_of_measurement: W
         value_template: "{{ value | float | round(2) }}"
+        entity_category: diagnostic
   - key: fbuf_pPv
     alias: powerPv
     title: Power PV
@@ -1202,6 +1409,7 @@ properties:
       config:
         device_class: power
         unit_of_measurement: W
+        entity_category: diagnostic
   - key: fcc
     jsonType: boolean
     example: true
@@ -1313,6 +1521,8 @@ properties:
     category: Config
     description: friendlyName
     homeAssistant:
+      config:
+        entity_category: diagnostic
   - key: fntp
     jsonType: unknown
     example: null
@@ -1321,9 +1531,6 @@ properties:
     title: Ohmpilot Temperature Limit
     jsonType: integer
     example: 20
-    homeAssistant:
-      config:
-        entity_category: config
   - key: frc
     alias: forceState
     title: Force State
@@ -1339,6 +1546,8 @@ properties:
       "2": "On"
     homeAssistant:
       component: select
+      config:
+        entity_category: config
   - key: frci
     jsonType: boolean
     example: true
@@ -1352,6 +1561,9 @@ properties:
     category: Status
     description: Remain in Eco mode after next trip minimum energy has been charged into to the car
     homeAssistant:
+      component: switch
+      config:
+        entity_category: config
   - key: frm
     alias: roundingMode
     title: Rounding Mode
@@ -1393,13 +1605,14 @@ properties:
     type: float
     category: Config
     homeAssistant:
-      component: number
+      component: sensor
       config:
         device_class: power
         unit_of_measurement: W
         min: 1400
         max: 11000
         step: 100
+        entity_category: diagnostic
   - key: fte
     alias: froniusTripEnergy
     title: Fronius Trip Energy
@@ -1428,6 +1641,10 @@ properties:
     jsonType: boolean
     example: false
     description: Uses dynamic electricity pricing (Lumina, aWattar)
+    homeAssistant:
+      component: switch
+      config:
+        entity_category: config
   - key: fup
     alias: usePvSurplus
     title: PV Surplus
@@ -1466,6 +1683,8 @@ properties:
     category: Constant
     homeAssistant:
       component: sensor
+      config:
+        entity_category: diagnostic
   - key: fzf
     alias: zeroFeedin
     title: Zero Feedin
@@ -2037,6 +2256,7 @@ properties:
       Total), pf (L1, L2, L3, N)
     homeAssistant:
       config:
+#        enabled_by_default: false
         enabled_by_default: true
     childProps:
       - key: nrg_ul1
@@ -2645,6 +2865,7 @@ properties:
         device_class: signal_strength
         unit_of_measurement: dBm
         enabled_by_default: false # Disabled by default due to high volume updates
+        entity_category: diagnostic
   - key: rst
     alias: rebootCharger
     title: Reboot Charger
@@ -2852,6 +3073,8 @@ properties:
     description: serial number
     homeAssistant:
       component: sensor
+      config:
+        entity_category: diagnostic
   - key: stao
     jsonType: unknown
     example: null
@@ -3215,6 +3438,7 @@ properties:
         device_class: energy
         state_class: total
         unit_of_measurement: Wh
+        entity_category: diagnostic
   - key: wifis
     alias: wifiConfigs
     title: WiFi Configs
