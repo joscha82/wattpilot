@@ -1641,6 +1641,10 @@ properties:
     jsonType: boolean
     example: false
     description: Uses dynamic electricity pricing (Lumina, aWattar)
+    homeAssistant:
+      component: switch
+      config:
+        entity_category: config
   - key: fup
     alias: usePvSurplus
     title: PV Surplus
