@@ -15,6 +15,7 @@ from importlib.metadata import version
 from time import sleep
 from threading import Event
 from types import SimpleNamespace
+from str2bool import str2bool
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -677,8 +678,8 @@ Usage: watch <event|message|property> <eventType|msgType|propName>"""
         value_regex = '.*'
         if len(args) > 1:
             value_regex = args[1]
-        props = {k: v for k, v in props.items() if re.match(r'^'+value_regex+'$',
-                                                            str(mqtt_get_encoded_property(self.wpdef["properties"][k], v)), flags=re.IGNORECASE)}
+        props = {k: v for k, v in props.items() if k in self.wpdef["properties"] if re.match(r'^'+value_regex+'$',
+                                                                                             str(mqtt_get_encoded_property(self.wpdef["properties"][k], v)), flags=re.IGNORECASE)}
         return props
 
 
@@ -808,7 +809,7 @@ def mqtt_subst_topic(s, values, expand=True):
 
 def mqtt_setup_client(host, port, client_id, available_topic, command_topic, username="", password=""):
     # Connect to MQTT server:
-    mqtt_client = mqtt.Client(client_id)
+    mqtt_client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1, client_id)
     mqtt_client.on_message = mqtt_set_value
     _LOGGER.info(f"Connecting to MQTT host {host} on port {port} ...")
     mqtt_client.will_set(
@@ -862,7 +863,10 @@ def mqtt_set_value(client, userdata, message):
     try:
         value = int(mqtt_get_decoded_property(pd, str(message.payload.decode("utf-8"))))
     except ValueError:
-        value = mqtt_get_decoded_property(pd, str(message.payload.decode("utf-8")))
+        try:
+            value = str2bool(mqtt_get_decoded_property(pd, str(message.payload.decode("utf-8"))))
+        except ValueError:
+            value = mqtt_get_decoded_property(pd, str(message.payload.decode("utf-8")))
     _LOGGER.info(
         f"MQTT Message received: topic={message.topic}, name={name}, value={value}")
     wp.send_update(name, value)
@@ -982,6 +986,12 @@ def ha_discover_property(wp, mqtt_client, pd, disable_discovery=False, force_ena
     if pd.get("rw", "") == "R/W":
         ha_discovery_config["command_topic"] = mqtt_subst_topic(
             Cfg.MQTT_TOPIC_PROPERTY_SET.val, topic_subst_map, False)
+        ha_discovery_config.update({
+            "payload_on": "true",
+            "payload_off": "false",
+            "state_on": "true",
+            "state_off": "false",
+        })
     ha_discovery_config = dict(
         list(ha_discovery_config.items())
         + list(ha_config.items())
@@ -996,10 +1006,11 @@ def ha_discover_property(wp, mqtt_client, pd, disable_discovery=False, force_ena
     _LOGGER.debug(
         f"Publishing property '{name}' to {topic_cfg}: {payload}")
     mqtt_client.publish(topic_cfg, payload, retain=True)
-    # Publish additional read-only sensor for special rw properties:
+    # Publish additional read-only sensor with category diagnostic for special rw properties:
     if pd.get("rw", "") == "R/W" and component != "sensor":
         if payload != "":
             del ha_discovery_config["command_topic"]
+            ha_discovery_config["entity_category"] = "diagnostic"
             payload = utils_value2json(ha_discovery_config)
         mqtt_client.publish(mqtt_subst_topic(Cfg.HA_TOPIC_CONFIG.val, topic_subst_map | {
                             "component": "sensor"}), payload, retain=True)
