@@ -390,7 +390,8 @@ MQTT commands:
 """
         global mqtt_client
         args = arg.split(' ')
-        if not self._ensure_connected():
+        #connection is NOT required for establishing mqtt connection.
+        if not self._ensure_connected() and args[0] != "start":
             return
         if len(args) < 1 or arg == '':
             print(f"ERROR: Wrong number of arguments!")
@@ -1189,17 +1190,23 @@ def main():
     wp = wp_initialize(Cfg.WATTPILOT_HOST.val, Cfg.WATTPILOT_PASSWORD.val)
     wpdef = wp_read_apidef() # TODO: Should be part of the wattpilot core library!
 
-    # Initialize shell:
+    #initialize shell
     wpsh = WattpilotShell(wp, wpdef)
+
+    # connect mqtt before shell, so first publish of fullStatus works as expected:
     if Cfg.WATTPILOT_AUTOCONNECT.val:
-        _LOGGER.info("Automatically connecting to Wattpilot ...")
-        wpsh.do_connect("")
         # Enable MQTT and/or HA integration:
         if Cfg.MQTT_ENABLED.val and not Cfg.HA_ENABLED.val:
+            _LOGGER.info("Preparing mqtt client ...")
             wpsh.do_mqtt("start")
         elif Cfg.MQTT_ENABLED.val and Cfg.HA_ENABLED.val:
             wpsh.do_ha("start")
+
+        _LOGGER.info("Automatically connecting to Wattpilot ...")
+        wpsh.do_connect("")
         wpsh.do_info("")
+    
+    
     if len(sys.argv) < 2:
         wpsh.cmdloop()
     else:
