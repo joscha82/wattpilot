@@ -6,12 +6,17 @@ import threading
 import hmac
 import logging
 import base64
+import bcrypt
 
 from enum import Enum, auto
 from time import sleep
 from types import SimpleNamespace
 
 _LOGGER = logging.getLogger(__name__)
+
+CONST_HASH_PBKDF2 = 'pbkdf2'
+CONST_HASH_BCRYPT = 'bcrypt'
+CONST_WPFLEX_DEVICETYPE='wattpilot_flex'
 
 class LoadMode():
     """Wrapper Class to represent the Load Mode of the Wattpilot"""
@@ -82,6 +87,8 @@ class Wattpilot(object):
     acsValues[0] = "Open"
     acsValues[1] = "Wait"
 
+    _authhashtype = CONST_HASH_PBKDF2
+    _hashedpassword = b''
 
     @property
     def allProps(self):
@@ -134,7 +141,7 @@ class Wattpilot(object):
     def serial(self,value):
         self._serial = value
         if (self._password is not None) & (self._serial is not None):
-            self._hashedpassword = base64.b64encode(hashlib.pbkdf2_hmac('sha512',self._password.encode(),self._serial.encode(),100000,256))[:32]
+            self.__update_hashedpassword(self._password,self._serial)
            
     @property
     def name(self):
@@ -176,7 +183,7 @@ class Wattpilot(object):
     def password(self,value):
         self._password = value
         if (self._password is not None) & (self._serial is not None):
-            self._hashedpassword = base64.b64encode(hashlib.pbkdf2_hmac('sha512',self._password.encode(),self._serial.encode(),100000,256))[:32]
+            self.__update_hashedpassword(self._password,self._serial)
 
 
     @property
@@ -480,6 +487,11 @@ class Wattpilot(object):
         ran = random.randrange(10**80)
         self._token3 = "%064x" % ran
         self._token3 = self._token3[:32]
+        if hasattr(message,'hash'):
+            self._authhashtype = message.hash            
+        elif self._devicetype == CONST_WPFLEX_DEVICETYPE:
+            self._authhashtype = CONST_HASH_BCRYPT
+        self.__update_hashedpassword()
         hash1 = hashlib.sha256((message.token1.encode()+self._hashedpassword)).hexdigest()
         hash = hashlib.sha256((self._token3 + message.token2+hash1).encode()).hexdigest()
         response = {}
@@ -488,6 +500,91 @@ class Wattpilot(object):
         response["hash"] = hash
         self.__send(response)
         self.__call_event_handler(Event.WP_AUTH, message)
+
+    def __update_hashedpassword(self,password=None,serial=None):
+        if password is None:
+            password = self._password
+        if serial is None:
+            serial = self._serial        
+        if (password is None) or (serial is None):
+            _LOGGER.info("__update_hashedpassword: password or serial empty - keep current _hashedpassword")
+            return
+        _LOGGER.debug("__update_hashedpassword: generating password hash of type: %s", self._authhashtype)
+        if self._authhashtype == CONST_HASH_PBKDF2:
+            self._hashedpassword = base64.b64encode(hashlib.pbkdf2_hmac('sha512',password.encode(),self.serial.encode(),100000,256))[:32]
+        elif self._authhashtype == CONST_HASH_BCRYPT:
+            hashedpw = self.__bcrypt_hash_password(password, serial)
+            self._hashedpassword = hashedpw.encode()
+        else:
+           _LOGGER.error("__update_hashedpassword: unknown authhashtype: %s", self._authhashtype)
+
+    def __bcryptjs_base64_encode(self,b: bytes, length: int) -> str:
+        #manual implementation of javascript bcrypt.encodeBase64 function
+        #encodeBase64 from https://github.com/dcodeIO/bcrypt.js/blob/28e510389374f5736c447395443d4a6687325048/index.js#L1133C17-L1133C29
+        #base64_encode from https://github.com/dcodeIO/bcrypt.js/blob/28e510389374f5736c447395443d4a6687325048/index.js#L427
+        #BASE64_CODE from: https://github.com/dcodeIO/bcrypt.js/blob/28e510389374f5736c447395443d4a6687325048/index.js#L402C1-L403C80
+        BASE64_CODE = list("./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")        
+        off = 0
+        rs = []
+        
+        if length <= 0 or length > len(b):
+            raise ValueError(f"Illegal len: {length}")
+            
+        while off < length:
+            c1 = b[off] & 0xff
+            off += 1
+            rs.append(BASE64_CODE[(c1 >> 2) & 0x3f])
+            c1 = (c1 & 0x03) << 4
+            if off >= length:
+                rs.append(BASE64_CODE[c1 & 0x3f])
+                break
+
+            c2 = b[off] & 0xff
+            off += 1
+            c1 |= (c2 >> 4) & 0x0f
+            rs.append(BASE64_CODE[c1 & 0x3f])
+            c1 = (c2 & 0x0f) << 2
+            if off >= length:
+                rs.append(BASE64_CODE[c1 & 0x3f])
+                break
+
+            c2 = b[off] & 0xff
+            off += 1
+            c1 |= (c2 >> 6) & 0x03
+            rs.append(BASE64_CODE[c1 & 0x3f])
+            rs.append(BASE64_CODE[c2 & 0x3f])
+
+        return "".join(rs)
+
+    def __bcryptjs_encodeBase64(self,s: str, length: int) -> str:
+        #helper wrapper function for __bcryptjs_base64_encode
+        #ensures python & java encoding is handled equally
+        if s.isdigit(): #numeric only serial
+            vals = [ord(ch) - ord('0') for ch in s]
+            b = bytes([0] * (length - len(vals)) + vals)
+        else: #not sure about serials in future - fallback
+            _LOGGER.error("__bcryptjs_encodeBase64: check serial string - should be digits only: %s", s)
+            raise ValueError(f"Check serial string - should be digits only: %s", s)
+        return self.__bcryptjs_base64_encode(b,length)
+     
+    def __bcrypt_hash_password(self,password,serial,iterations=8) -> str:
+        #hash bassword bcrypt / wattpilot flex compatible
+        password_hash_sha256 = hashlib.sha256(password.encode('utf-8')).hexdigest()
+        serial_b64 = self.__bcryptjs_encodeBase64(serial, 16)
+        salt = []
+        salt.append("$2a$")
+        if (iterations < 10):
+            salt.append("0")
+        salt.append(str(iterations))
+        salt.append("$")
+        salt.append(serial_b64)
+        salt=''.join(salt)
+        bsalt = salt.encode("utf-8")
+        bpassword = password_hash_sha256.encode('utf-8')
+        pwhash = bcrypt.hashpw(bpassword, bsalt)
+        salt_length = len(salt)
+        pwhash_sub = pwhash[salt_length:].decode('ascii')
+        return pwhash_sub
 
     def __send(self,message,secure=False):
         # If the  connection to wattpilot is over a unsecure channel (http) all send messages are wrapped in
